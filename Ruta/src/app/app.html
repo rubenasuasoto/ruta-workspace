@@ -1,0 +1,10 @@
+<header class="topbar">
+  <a class="brand" routerLink="/" (click)="closeMenu()" aria-label="Ruta, inicio"><span>R</span> ruta</a>
+  <button class="menu-button" type="button" (click)="menuOpen.set(!menuOpen())" [attr.aria-expanded]="menuOpen()" aria-label="Abrir menú">☰</button>
+  <nav [class.open]="menuOpen()" aria-label="Navegación principal">
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMenu()">Inicio</a>
+    <a routerLink="/viajes" routerLinkActive="active" (click)="closeMenu()">Mis viajes</a>
+    <a routerLink="/lugares" routerLinkActive="active" (click)="closeMenu()">Lugares</a>
+  </nav>
+</header>
+<main><router-outlet /></main>
