@@ -1,32 +1,78 @@
+import { TestBed } from '@angular/core/testing';
+import { Api } from '../api/api';
+import { dataControllerData } from '../api/fn/account/data-controller-data';
+import { importsControllerImport } from '../api/fn/imports/imports-controller-import';
+import { tripsControllerAddExpense } from '../api/fn/trips/trips-controller-add-expense';
 import { TripStore } from './trip-store.service';
 
-describe('TripStore', () => {
-  beforeEach(() => localStorage.clear());
+const emptyData = { trips: [], days: [], expenses: [], places: [] };
 
-  it('creates an itinerary day for every date of a new trip', () => {
-    const store = new TripStore();
-    const trip = store.createTrip({ destination: 'Oporto', country: 'Portugal', startDate: '2026-09-01', endDate: '2026-09-03', budget: 500, status: 'planificando', coverImage: 'cover', description: 'Prueba' });
+describe('TripStore HTTP repository', () => {
+  let invoke: ReturnType<typeof vi.fn>;
+  let store: TripStore;
 
-    expect(store.daysFor(trip.id)).toHaveLength(3);
-    expect(store.trip(trip.id)?.destination).toBe('Oporto');
+  beforeEach(() => {
+    localStorage.clear();
+    invoke = vi.fn();
+    TestBed.configureTestingModule({
+      providers: [TripStore, { provide: Api, useValue: { invoke } }],
+    });
+    store = TestBed.inject(TripStore);
   });
 
-  it('updates the spending summary and survives a fresh store instance', () => {
-    const store = new TripStore();
-    store.addExpense({ tripId: 'lisboa', title: 'Café', category: 'comida', amount: 5.5, date: '2026-08-18' });
+  it('loads typed account data and exposes the existing selectors', async () => {
+    invoke.mockResolvedValue({
+      trips: [{ id: 'porto', destination: 'Oporto', country: 'Portugal', startDate: '2026-09-01', endDate: '2026-09-03', budget: 500, status: 'planificando', coverImage: 'cover', description: 'Prueba' }],
+      days: [{ id: 'day-1', tripId: 'porto', date: '2026-09-01', activities: [] }],
+      expenses: [],
+      places: [],
+    });
 
-    expect(store.spentFor('lisboa')).toBe(665.5);
-    const restored = new TripStore();
-    expect(restored.expensesFor('lisboa').some((expense) => expense.title === 'Café')).toBe(true);
+    await store.load();
+
+    expect(invoke).toHaveBeenCalledWith(dataControllerData);
+    expect(store.trip('porto')?.destination).toBe('Oporto');
+    expect(store.daysFor('porto')).toHaveLength(1);
+    expect(store.initialized()).toBe(true);
   });
 
-  it('reorders activities without losing either activity', () => {
-    const store = new TripStore();
-    const day = store.daysFor('lisboa')[1];
-    const first = day.activities[0];
-    const second = day.activities[1];
-    store.moveActivity(day.id, second.id, -1);
+  it('sends only the expense DTO fields and updates after confirmation', async () => {
+    invoke.mockImplementation((operation: unknown) => {
+      if (operation === tripsControllerAddExpense) {
+        return Promise.resolve({ id: 'expense-1', tripId: 'porto', title: 'Café', category: 'comida', amount: 5.5, date: '2026-09-01' });
+      }
+      return Promise.resolve(emptyData);
+    });
 
-    expect(store.daysFor('lisboa')[1].activities.map((activity) => activity.id)).toEqual([second.id, first.id]);
+    await store.addExpense({ tripId: 'porto', title: 'Café', category: 'comida', amount: 5.5, date: '2026-09-01' });
+
+    expect(invoke).toHaveBeenCalledWith(tripsControllerAddExpense, {
+      tripId: 'porto',
+      body: { title: 'Café', category: 'comida', amount: 5.5, date: '2026-09-01' },
+    });
+    expect(store.spentFor('porto')).toBe(5.5);
+  });
+
+  it('preserves localStorage when the transactional import fails', async () => {
+    const raw = JSON.stringify({ version: 1, trips: [], days: [], expenses: [], places: [] });
+    localStorage.setItem('ruta.travel-journal.v1', raw);
+    invoke.mockImplementation((operation: unknown) =>
+      operation === importsControllerImport ? Promise.reject(new Error('offline')) : Promise.resolve(emptyData));
+
+    await expect(store.importLocalData()).rejects.toThrow('offline');
+
+    expect(localStorage.getItem('ruta.travel-journal.v1')).toBe(raw);
+    expect(store.error()).toContain('Ruta API');
+  });
+
+  it('removes localStorage only after a confirmed import and reload', async () => {
+    localStorage.setItem('ruta.travel-journal.v1', JSON.stringify({ version: 1, trips: [], days: [], expenses: [], places: [] }));
+    invoke.mockImplementation((operation: unknown) =>
+      operation === importsControllerImport ? Promise.resolve({ imported: true }) : Promise.resolve(emptyData));
+
+    await expect(store.importLocalData()).resolves.toBe(true);
+
+    expect(localStorage.getItem('ruta.travel-journal.v1')).toBeNull();
+    expect(invoke).toHaveBeenCalledWith(dataControllerData);
   });
 });

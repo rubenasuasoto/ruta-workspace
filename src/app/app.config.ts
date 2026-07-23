@@ -1,11 +1,23 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig, inject, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
-
 import { routes } from './app.routes';
+import { provideApiConfiguration } from './api/api-configuration';
+import { AuthStore } from './auth/auth.store';
+import { authInterceptor } from './auth/auth.interceptor';
+import { TripStore } from './core/trip-store.service';
+import { environment } from '../environments/environment';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes)
+    provideRouter(routes),
+    provideHttpClient(withInterceptors([authInterceptor])),
+    provideApiConfiguration(environment.apiBaseUrl),
+    provideAppInitializer(() => {
+      const auth = inject(AuthStore);
+      const trips = inject(TripStore);
+      return auth.initialize().then(() => auth.authenticated() ? trips.load() : undefined);
+    })
   ]
 };

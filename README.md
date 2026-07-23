@@ -1,59 +1,42 @@
 # Ruta
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.0.7.
+SPA Angular 22 para diseñar viajes, itinerarios, presupuestos y lugares guardados. Utiliza signals y formularios reactivos, y consume un cliente tipado generado desde el contrato de `ruta-api`.
 
-## Development server
+## Desarrollo local
 
-To start a local development server, run:
-
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+1. Inicia `ruta-api` y PostgreSQL desde el repositorio hermano:
 
 ```bash
-ng generate component component-name
+docker compose up --build
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+2. Instala dependencias e inicia Angular:
 
 ```bash
-ng generate --help
+npm install
+npm start
 ```
 
-## Building
+Abre `http://localhost:4200`. El proxy local envía `/api` a NestJS.
 
-To build the project run:
+El acceso con Google permanece deshabilitado hasta añadir el identificador público en `src/environments/environment.ts`. Las claves privadas nunca pertenecen al repositorio Angular.
+
+## Cliente OpenAPI
+
+El cliente de `src/app/api` es código generado y versionado. Para actualizar contrato y cliente desde ambos repositorios:
 
 ```bash
-ng build
+npm run api:sync
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+No edites manualmente los archivos generados.
 
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## Verificación
 
 ```bash
-ng test
+npm run build
+npm test -- --watch=false
+npm run test:e2e
 ```
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Playwright utiliza la API y PostgreSQL reales, intercepta únicamente la generación de IA y elimina sus propias cuentas `e2e-browser-*` antes y después del flujo.

@@ -1,52 +1,217 @@
-import { Injectable, computed, signal } from '@angular/core';
-import { Activity, Expense, ExpenseCategory, ItineraryDay, SavedPlace, Trip, TripStatus } from './models';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { Api } from '../api/api';
+import { dataControllerData } from '../api/fn/account/data-controller-data';
+import { dataControllerSeedDemo } from '../api/fn/account/data-controller-seed-demo';
+import { importsControllerImport } from '../api/fn/imports/imports-controller-import';
+import { placesControllerCreate } from '../api/fn/places/places-controller-create';
+import { placesControllerRemove } from '../api/fn/places/places-controller-remove';
+import { placesControllerUpdate } from '../api/fn/places/places-controller-update';
+import { tripsControllerAddActivity } from '../api/fn/trips/trips-controller-add-activity';
+import { tripsControllerAddExpense } from '../api/fn/trips/trips-controller-add-expense';
+import { tripsControllerCreate } from '../api/fn/trips/trips-controller-create';
+import { tripsControllerRemove } from '../api/fn/trips/trips-controller-remove';
+import { tripsControllerRemoveActivity } from '../api/fn/trips/trips-controller-remove-activity';
+import { tripsControllerRemoveExpense } from '../api/fn/trips/trips-controller-remove-expense';
+import { tripsControllerReorder } from '../api/fn/trips/trips-controller-reorder';
+import { tripsControllerToggleActivity } from '../api/fn/trips/trips-controller-toggle-activity';
+import { tripsControllerUpdate } from '../api/fn/trips/trips-controller-update';
+import { tripsControllerUpdateActivity } from '../api/fn/trips/trips-controller-update-activity';
+import { Activity, Expense, ItineraryDay, SavedPlace, Trip } from './models';
 
-interface RutaData { version: 1; trips: Trip[]; days: ItineraryDay[]; expenses: Expense[]; places: SavedPlace[]; }
 const STORE_KEY = 'ruta.travel-journal.v1';
-const id = () => crypto.randomUUID();
-const dateRange = (start: string, end: string): string[] => { const dates: string[] = []; const cursor = new Date(`${start}T12:00:00`); const last = new Date(`${end}T12:00:00`); while (cursor <= last) { dates.push(cursor.toISOString().slice(0, 10)); cursor.setDate(cursor.getDate() + 1); } return dates; };
-
-const demo: RutaData = {
-  version: 1,
-  trips: [
-    { id: 'lisboa', destination: 'Lisboa', country: 'Portugal', startDate: '2026-08-18', endDate: '2026-08-23', budget: 950, status: 'proximo', coverImage: 'https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=1200&q=85', description: 'Azulejos, miradores y tardes lentas junto al Tajo.' },
-    { id: 'kioto', destination: 'Kioto', country: 'Japón', startDate: '2026-11-04', endDate: '2026-11-10', budget: 2200, status: 'planificando', coverImage: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1200&q=85', description: 'Una semana entre jardines, mercados y pequeños rituales.' },
-    { id: 'napoles', destination: 'Nápoles', country: 'Italia', startDate: '2026-04-10', endDate: '2026-04-14', budget: 780, status: 'completado', coverImage: 'https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?auto=format&fit=crop&w=1200&q=85', description: 'Un viaje de sabores intensos y calles con vida propia.' }
-  ],
-  days: [
-    { id: 'lisboa-18', tripId: 'lisboa', date: '2026-08-18', activities: [{ id: 'a1', title: 'Llegada y paseo por Alfama', time: '17:30', kind: 'naturaleza', notes: 'Empezar en el mirador Portas do Sol.', completed: false }] },
-    { id: 'lisboa-19', tripId: 'lisboa', date: '2026-08-19', activities: [{ id: 'a2', title: 'Desayuno en Baixa', time: '09:00', kind: 'comida', cost: 12, notes: '', completed: false }, { id: 'a3', title: 'Museo del Azulejo', time: '12:00', kind: 'cultura', cost: 10, notes: 'Reservar con antelación.', completed: false }] }
-  ],
-  expenses: [
-    { id: 'e1', tripId: 'lisboa', title: 'Apartamento en Alfama', category: 'alojamiento', amount: 470, date: '2026-08-18' }, { id: 'e2', tripId: 'lisboa', title: 'Vuelos ida y vuelta', category: 'transporte', amount: 180, date: '2026-07-10' }, { id: 'e3', tripId: 'lisboa', title: 'Museo del Azulejo', category: 'experiencias', amount: 10, date: '2026-08-19' },
-    { id: 'e4', tripId: 'napoles', title: 'Hotel Piazza Bellini', category: 'alojamiento', amount: 390, date: '2026-04-10' }, { id: 'e5', tripId: 'napoles', title: 'Tren y vuelos', category: 'transporte', amount: 205, date: '2026-03-10' }
-  ],
-  places: [
-    { id: 'p1', name: 'LX Factory', city: 'Lisboa', country: 'Portugal', category: 'cultura', image: 'https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=800&q=75', visited: false, note: 'Librerías, diseño y café.' }, { id: 'p2', name: 'Fushimi Inari', city: 'Kioto', country: 'Japón', category: 'naturaleza', image: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&w=800&q=75', visited: false, note: 'Ir a primera hora.' }, { id: 'p3', name: 'Pio Monte della Misericordia', city: 'Nápoles', country: 'Italia', category: 'cultura', image: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=800&q=75', visited: true, note: 'Una joya silenciosa.' }
-  ]
-};
 
 @Injectable({ providedIn: 'root' })
 export class TripStore {
-  readonly trips = signal<Trip[]>([]); readonly days = signal<ItineraryDay[]>([]); readonly expenses = signal<Expense[]>([]); readonly places = signal<SavedPlace[]>([]);
+  private readonly api = inject(Api);
+  readonly trips = signal<Trip[]>([]);
+  readonly days = signal<ItineraryDay[]>([]);
+  readonly expenses = signal<Expense[]>([]);
+  readonly places = signal<SavedPlace[]>([]);
+  readonly loading = signal(false);
+  readonly error = signal<string | null>(null);
+  readonly initialized = signal(false);
+  readonly localImportAvailable = signal(false);
+  readonly importDismissed = signal(false);
   readonly totalPlanned = computed(() => this.trips().reduce((sum, trip) => sum + trip.budget, 0));
-  constructor() { this.hydrate(); }
-  trip(idValue: string): Trip | undefined { return this.trips().find((item) => item.id === idValue); }
+
+  trip(id: string): Trip | undefined { return this.trips().find((item) => item.id === id); }
   daysFor(tripId: string): ItineraryDay[] { return this.days().filter((day) => day.tripId === tripId).sort((a, b) => a.date.localeCompare(b.date)); }
   expensesFor(tripId: string): Expense[] { return this.expenses().filter((expense) => expense.tripId === tripId).sort((a, b) => b.date.localeCompare(a.date)); }
   spentFor(tripId: string): number { return this.expensesFor(tripId).reduce((sum, expense) => sum + expense.amount, 0); }
-  createTrip(input: Omit<Trip, 'id'>): Trip { const trip = { ...input, id: id() }; this.trips.update((items) => [trip, ...items]); this.days.update((items) => [...items, ...dateRange(trip.startDate, trip.endDate).map((date) => ({ id: id(), tripId: trip.id, date, activities: [] }))]); this.save(); return trip; }
-  updateTrip(trip: Trip): void { this.trips.update((items) => items.map((item) => item.id === trip.id ? trip : item)); const existing = this.daysFor(trip.id); const dates = new Set(existing.map((day) => day.date)); const added = dateRange(trip.startDate, trip.endDate).filter((date) => !dates.has(date)).map((date) => ({ id: id(), tripId: trip.id, date, activities: [] })); this.days.update((items) => [...items.filter((day) => day.tripId !== trip.id || day.date >= trip.startDate && day.date <= trip.endDate), ...added]); this.save(); }
-  removeTrip(tripId: string): void { this.trips.update((items) => items.filter((item) => item.id !== tripId)); this.days.update((items) => items.filter((item) => item.tripId !== tripId)); this.expenses.update((items) => items.filter((item) => item.tripId !== tripId)); this.save(); }
-  addActivity(dayId: string, input: Omit<Activity, 'id'>): void { this.days.update((items) => items.map((day) => day.id === dayId ? { ...day, activities: [...day.activities, { ...input, id: id() }].sort((a, b) => a.time.localeCompare(b.time)) } : day)); this.save(); }
-  updateActivity(dayId: string, activity: Activity): void { this.days.update((items) => items.map((day) => day.id === dayId ? { ...day, activities: day.activities.map((item) => item.id === activity.id ? activity : item).sort((a, b) => a.time.localeCompare(b.time)) } : day)); this.save(); }
-  toggleActivity(dayId: string, activityId: string): void { this.days.update((items) => items.map((day) => day.id === dayId ? { ...day, activities: day.activities.map((activity) => activity.id === activityId ? { ...activity, completed: !activity.completed } : activity) } : day)); this.save(); }
-  removeActivity(dayId: string, activityId: string): void { this.days.update((items) => items.map((day) => day.id === dayId ? { ...day, activities: day.activities.filter((activity) => activity.id !== activityId) } : day)); this.save(); }
-  moveActivity(dayId: string, activityId: string, direction: -1 | 1): void { this.days.update((items) => items.map((day) => { if (day.id !== dayId) return day; const index = day.activities.findIndex((activity) => activity.id === activityId); const target = index + direction; if (index < 0 || target < 0 || target >= day.activities.length) return day; const activities = [...day.activities]; [activities[index], activities[target]] = [activities[target], activities[index]]; return { ...day, activities }; })); this.save(); }
-  addExpense(input: Omit<Expense, 'id'>): void { this.expenses.update((items) => [{ ...input, id: id() }, ...items]); this.save(); }
-  removeExpense(expenseId: string): void { this.expenses.update((items) => items.filter((expense) => expense.id !== expenseId)); this.save(); }
-  addPlace(input: Omit<SavedPlace, 'id'>): void { this.places.update((items) => [{ ...input, id: id() }, ...items]); this.save(); }
-  togglePlace(placeId: string): void { this.places.update((items) => items.map((place) => place.id === placeId ? { ...place, visited: !place.visited } : place)); this.save(); }
-  private hydrate(): void { try { const value = localStorage.getItem(STORE_KEY); const data: RutaData = value ? JSON.parse(value) : demo; if (data.version !== 1) throw new Error('Versión incompatible'); this.trips.set(data.trips); this.days.set(data.days); this.expenses.set(data.expenses); this.places.set(data.places); if (!value) this.save(); } catch { this.trips.set(demo.trips); this.days.set(demo.days); this.expenses.set(demo.expenses); this.places.set(demo.places); } }
-  private save(): void { localStorage.setItem(STORE_KEY, JSON.stringify({ version: 1, trips: this.trips(), days: this.days(), expenses: this.expenses(), places: this.places() } satisfies RutaData)); }
+
+  async load(): Promise<void> {
+    this.loading.set(true);
+    this.error.set(null);
+    try {
+      const data = await this.api.invoke(dataControllerData);
+      this.trips.set(data.trips as Trip[]);
+      this.days.set(data.days as ItineraryDay[]);
+      this.expenses.set(data.expenses as Expense[]);
+      this.places.set(data.places as SavedPlace[]);
+      this.localImportAvailable.set(localStorage.getItem(STORE_KEY) !== null);
+      this.initialized.set(true);
+    } catch (error) {
+      this.error.set(this.message(error));
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  reset(): void {
+    this.trips.set([]); this.days.set([]); this.expenses.set([]); this.places.set([]);
+    this.initialized.set(false); this.error.set(null); this.loading.set(false);
+    this.localImportAvailable.set(false); this.importDismissed.set(false);
+  }
+
+  async retry(): Promise<void> { await this.load(); }
+
+  async createTrip(input: Omit<Trip, 'id'>): Promise<Trip> {
+    return this.mutate(async () => {
+      const trip = await this.api.invoke(tripsControllerCreate, { body: input });
+      this.trips.update((items) => [trip as Trip, ...items]);
+      await this.load();
+      return trip as Trip;
+    });
+  }
+
+  async updateTrip(trip: Trip): Promise<void> {
+    await this.mutate(async () => {
+      const { id, ...body } = trip;
+      const updated = await this.api.invoke(tripsControllerUpdate, { tripId: id, body });
+      this.trips.update((items) => items.map((item) => item.id === trip.id ? updated as Trip : item));
+      await this.load();
+    });
+  }
+
+  async removeTrip(tripId: string): Promise<void> {
+    await this.mutate(async () => {
+      await this.api.invoke(tripsControllerRemove, { tripId });
+      this.trips.update((items) => items.filter((item) => item.id !== tripId));
+      this.days.update((items) => items.filter((item) => item.tripId !== tripId));
+      this.expenses.update((items) => items.filter((item) => item.tripId !== tripId));
+    });
+  }
+
+  async addActivity(dayId: string, input: Omit<Activity, 'id'>): Promise<void> {
+    await this.mutate(async () => {
+      const { title, time, kind, cost, notes, completed } = input;
+      const activity = await this.api.invoke(tripsControllerAddActivity, { dayId, body: { title, time, kind, cost, notes, completed } });
+      this.days.update((items) => items.map((day) => day.id === dayId ? { ...day, activities: [...day.activities, activity as Activity].sort((a, b) => (a.position ?? 0) - (b.position ?? 0)) } : day));
+    });
+  }
+
+  async updateActivity(dayId: string, activity: Activity): Promise<void> {
+    await this.mutate(async () => {
+      const { title, time, kind, cost, notes, completed } = activity;
+      const updated = await this.api.invoke(tripsControllerUpdateActivity, { activityId: activity.id, body: { title, time, kind, cost, notes, completed } });
+      this.days.update((items) => items.map((day) => day.id === dayId ? { ...day, activities: day.activities.map((item) => item.id === activity.id ? updated as Activity : item) } : day));
+    });
+  }
+
+  async toggleActivity(dayId: string, activityId: string): Promise<void> {
+    await this.mutate(async () => {
+      const updated = await this.api.invoke(tripsControllerToggleActivity, { activityId });
+      this.days.update((items) => items.map((day) => day.id === dayId ? { ...day, activities: day.activities.map((item) => item.id === activityId ? updated as Activity : item) } : day));
+    });
+  }
+
+  async removeActivity(dayId: string, activityId: string): Promise<void> {
+    await this.mutate(async () => {
+      await this.api.invoke(tripsControllerRemoveActivity, { activityId });
+      this.days.update((items) => items.map((day) => day.id === dayId ? { ...day, activities: day.activities.filter((activity) => activity.id !== activityId) } : day));
+    });
+  }
+
+  async moveActivity(dayId: string, activityId: string, direction: -1 | 1): Promise<void> {
+    const day = this.days().find((item) => item.id === dayId);
+    if (!day) return;
+    const ids = day.activities.map((activity) => activity.id);
+    const index = ids.indexOf(activityId);
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= ids.length) return;
+    [ids[index], ids[target]] = [ids[target], ids[index]];
+    await this.mutate(async () => {
+      const updated = await this.api.invoke(tripsControllerReorder, { dayId, body: { activityIds: ids } });
+      this.days.update((items) => items.map((item) => item.id === dayId ? updated as ItineraryDay : item));
+    });
+  }
+
+  async addExpense(input: Omit<Expense, 'id'>): Promise<void> {
+    await this.mutate(async () => {
+      const { title, category, amount, date } = input;
+      const expense = await this.api.invoke(tripsControllerAddExpense, { tripId: input.tripId, body: { title, category, amount, date } });
+      this.expenses.update((items) => [expense as Expense, ...items]);
+    });
+  }
+
+  async removeExpense(expenseId: string): Promise<void> {
+    await this.mutate(async () => {
+      await this.api.invoke(tripsControllerRemoveExpense, { expenseId });
+      this.expenses.update((items) => items.filter((expense) => expense.id !== expenseId));
+    });
+  }
+
+  async addPlace(input: Omit<SavedPlace, 'id'>): Promise<void> {
+    await this.mutate(async () => {
+      const place = await this.api.invoke(placesControllerCreate, { body: input });
+      this.places.update((items) => [place as SavedPlace, ...items]);
+    });
+  }
+
+  async togglePlace(placeId: string): Promise<void> {
+    const current = this.places().find((place) => place.id === placeId);
+    if (!current) return;
+    await this.mutate(async () => {
+      const place = await this.api.invoke(placesControllerUpdate, { placeId, body: { visited: !current.visited } });
+      this.places.update((items) => items.map((item) => item.id === placeId ? place as SavedPlace : item));
+    });
+  }
+
+  async removePlace(placeId: string): Promise<void> {
+    await this.mutate(async () => {
+      await this.api.invoke(placesControllerRemove, { placeId });
+      this.places.update((items) => items.filter((place) => place.id !== placeId));
+    });
+  }
+
+  async importLocalData(): Promise<boolean> {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return false;
+    return this.mutate(async () => {
+      const payload = JSON.parse(raw);
+      await this.api.invoke(importsControllerImport, { body: payload });
+      localStorage.removeItem(STORE_KEY);
+      this.localImportAvailable.set(false);
+      await this.load();
+      return true;
+    });
+  }
+
+  dismissImport(): void { this.importDismissed.set(true); }
+
+  async seedDemo(): Promise<void> {
+    await this.mutate(async () => {
+      await this.api.invoke(dataControllerSeedDemo);
+      await this.load();
+    });
+  }
+
+  private async mutate<T>(operation: () => Promise<T>): Promise<T> {
+    this.error.set(null);
+    try {
+      return await operation();
+    } catch (error) {
+      this.error.set(this.message(error));
+      throw error;
+    }
+  }
+
+  private message(error: unknown): string {
+    if (typeof error === 'object' && error && 'error' in error) {
+      const message = (error as { error?: { message?: string | string[] } }).error?.message;
+      if (Array.isArray(message)) return message.join('. ');
+      if (message) return message;
+    }
+    return 'No se pudo conectar con Ruta API. Comprueba Docker e inténtalo de nuevo.';
+  }
 }
