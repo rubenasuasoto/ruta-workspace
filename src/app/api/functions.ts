@@ -3,6 +3,8 @@
 
 export type { AppControllerHealth$Params as AppControllerHealth$Params } from './fn/system/app-controller-health';
 export { appControllerHealth as appControllerHealth } from './fn/system/app-controller-health';
+export type { PublicConfigControllerGetPublicConfig$Params as PublicConfigControllerGetPublicConfig$Params } from './fn/system/public-config-controller-get-public-config';
+export { publicConfigControllerGetPublicConfig as publicConfigControllerGetPublicConfig } from './fn/system/public-config-controller-get-public-config';
 export type { AuthControllerRegister$Params as AuthControllerRegister$Params } from './fn/auth/auth-controller-register';
 export { authControllerRegister as authControllerRegister } from './fn/auth/auth-controller-register';
 export type { AuthControllerLogin$Params as AuthControllerLogin$Params } from './fn/auth/auth-controller-login';
@@ -71,3 +73,5 @@ export type { AiControllerGenerate$Params as AiControllerGenerate$Params } from 
 export { aiControllerGenerate as aiControllerGenerate } from './fn/ai/ai-controller-generate';
 export type { GeocodingControllerSearch$Params as GeocodingControllerSearch$Params } from './fn/geo/geocoding-controller-search';
 export { geocodingControllerSearch as geocodingControllerSearch } from './fn/geo/geocoding-controller-search';
+export type { RoutingControllerDayRoute$Params as RoutingControllerDayRoute$Params } from './fn/routing/routing-controller-day-route';
+export { routingControllerDayRoute as routingControllerDayRoute } from './fn/routing/routing-controller-day-route';

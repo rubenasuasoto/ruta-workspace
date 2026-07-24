@@ -3,15 +3,23 @@ import { Injectable, inject, signal } from '@angular/core';
 import { Api } from '../../api/api';
 import { geocodingControllerSearch } from '../../api/fn/geo/geocoding-controller-search';
 import { GeocodeResultDto } from '../../api/models/geocode-result-dto';
+import { PublicConfigStore } from '../../core/public-config.store';
 
 @Injectable({ providedIn: 'root' })
 export class GeocodingService {
   private readonly api = inject(Api);
+  private readonly publicConfig = inject(PublicConfigStore);
+  readonly enabled = this.publicConfig.geocodingEnabled;
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly stale = signal(false);
+  readonly attribution = signal('');
 
   async search(query: string): Promise<GeocodeResultDto[]> {
+    if (!this.enabled()) {
+      this.error.set('El servicio de búsqueda geográfica todavía no está configurado.');
+      return [];
+    }
     this.loading.set(true);
     this.error.set(null);
     try {
@@ -19,6 +27,7 @@ export class GeocodingService {
         q: query.trim(),
       });
       this.stale.set(response.stale);
+      this.attribution.set(response.attribution);
       return response.results;
     } catch (error) {
       this.error.set(this.message(error));

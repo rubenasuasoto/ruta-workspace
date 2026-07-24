@@ -15,4 +15,5 @@ export interface ActivityResponseDto {
   savedPlaceId?: string | null;
   time: string;
   title: string;
+  travelModeToNext: 'walking' | 'cycling' | 'driving';
 }

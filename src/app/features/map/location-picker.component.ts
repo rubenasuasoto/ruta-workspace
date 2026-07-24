@@ -29,11 +29,14 @@ export interface LocationSelection {
         </div>
         <div class="search">
           <input id="location-query" [(ngModel)]="query" [ngModelOptions]="{standalone:true}" placeholder="Ej. Casa Milà, Barcelona" minlength="3" maxlength="200">
-          <button class="button small secondary" type="button" (click)="search()" [disabled]="geo.loading() || query.trim().length < 3">
+          <button class="button small secondary" type="button" (click)="search()" [disabled]="!geo.enabled() || geo.loading() || query.trim().length < 3">
             {{ geo.loading() ? 'Buscando…' : 'Buscar' }}
           </button>
         </div>
       </div>
+      @if (!geo.enabled()) {
+        <p class="notice" role="status">La búsqueda geográfica estará disponible cuando se configure el servicio de mapas.</p>
+      }
       @if (geo.error()) { <p class="error" role="alert">{{ geo.error() }}</p> }
       @if (geo.stale()) { <p class="notice" role="status">Mostramos un resultado guardado porque el proveedor no respondió.</p> }
       @if (results().length) {
@@ -44,6 +47,9 @@ export interface LocationSelection {
             </button></li>
           }
         </ul>
+      }
+      @if (geo.attribution()) {
+        <p class="attribution">{{ geo.attribution() }}</p>
       }
       @if (selection(); as selected) {
         <div class="selected">
@@ -61,7 +67,7 @@ export interface LocationSelection {
     </section>
   `,
   styles: `
-    .picker{border-top:1px solid var(--line);grid-column:1/-1;margin-top:.3rem;padding-top:1rem}.search-row>div:first-child{display:flex;flex-direction:column}.search-row label{font-size:.78rem;font-weight:700}.search-row small,.hint{color:var(--muted);font-size:.7rem}.search{display:flex;gap:.55rem;margin-top:.6rem}.search input{background:#fffdfa;border:1px solid var(--line);border-radius:.55rem;flex:1;min-width:0;padding:.65rem .75rem}.results{border:1px solid var(--line);border-radius:.7rem;list-style:none;margin:.7rem 0;padding:.25rem}.results button{background:transparent;border:0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;padding:.65rem;text-align:left;width:100%}.results li:last-child button{border:0}.results span{color:var(--muted);font-size:.7rem}.selected{align-items:center;display:flex;justify-content:space-between;margin:.8rem 0}.selected small{color:var(--muted);display:block;font-size:.7rem}.notice{background:#f5ead6;border-radius:.5rem;font-size:.73rem;padding:.6rem}.picker app-travel-map{height:280px}@media(max-width:600px){.search{align-items:stretch;flex-direction:column}.selected{align-items:flex-start;flex-direction:column;gap:.4rem}}
+    .picker{border-top:1px solid var(--line);grid-column:1/-1;margin-top:.3rem;padding-top:1rem}.search-row>div:first-child{display:flex;flex-direction:column}.search-row label{font-size:.78rem;font-weight:700}.search-row small,.hint,.attribution{color:var(--muted);font-size:.7rem}.search{display:flex;gap:.55rem;margin-top:.6rem}.search input{background:#fffdfa;border:1px solid var(--line);border-radius:.55rem;flex:1;min-width:0;padding:.65rem .75rem}.results{border:1px solid var(--line);border-radius:.7rem;list-style:none;margin:.7rem 0;padding:.25rem}.results button{background:transparent;border:0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;padding:.65rem;text-align:left;width:100%}.results li:last-child button{border:0}.results span{color:var(--muted);font-size:.7rem}.selected{align-items:center;display:flex;justify-content:space-between;margin:.8rem 0}.selected small{color:var(--muted);display:block;font-size:.7rem}.notice{background:#f5ead6;border-radius:.5rem;font-size:.73rem;padding:.6rem}.attribution{margin:.45rem 0}.picker app-travel-map{height:280px}@media(max-width:600px){.search{align-items:stretch;flex-direction:column}.selected{align-items:flex-start;flex-direction:column;gap:.4rem}}
   `,
 })
 export class LocationPickerComponent {

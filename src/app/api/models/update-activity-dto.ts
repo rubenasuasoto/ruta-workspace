@@ -13,4 +13,5 @@ export interface UpdateActivityDto {
   savedPlaceId?: string | null;
   time?: string;
   title?: string;
+  travelModeToNext?: 'walking' | 'cycling' | 'driving';
 }

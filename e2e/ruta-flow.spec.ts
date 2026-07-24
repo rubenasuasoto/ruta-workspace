@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 test('registro, viaje, borrador IA, gasto y persistencia tras recargar', async ({ page }) => {
   test.setTimeout(90_000);
   const email = `e2e-browser-${Date.now()}@ruta.local`;
+  let mappedActivities: Array<{ id: string; travelModeToNext?: string }> = [];
   await page.addInitScript(() => {
     localStorage.setItem('ruta.travel-journal.v1', JSON.stringify({
       version: 1,
@@ -39,6 +40,7 @@ test('registro, viaje, borrador IA, gasto y persistencia tras recargar', async (
       contentType: 'application/json',
       body: JSON.stringify({
         stale: false,
+        attribution: '© openrouteservice.org by HeiGIT | Map data © OpenStreetMap contributors',
         results: [{
           id: 'node:123',
           label: 'Casa Milà, Barcelona, España',
@@ -47,6 +49,64 @@ test('registro, viaje, borrador IA, gasto y persistencia tras recargar', async (
           longitude: 2.1619,
           bbox: [2.16, 41.39, 2.17, 41.4],
         }],
+      }),
+    });
+  });
+  await page.route('**/api/config/public', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        googleClientId: '',
+        routingEnabled: true,
+        geocodingEnabled: true,
+        mapTiles: {
+          url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          attribution: 'OpenStreetMap',
+          maxZoom: 19,
+          provider: 'openstreetmap',
+        },
+      }),
+    });
+  });
+  await page.route('**/api/trips/*/map', async (route) => {
+    const response = await route.fetch();
+    const body = await response.json();
+    mappedActivities = body.days.flatMap(
+      (day: { activities: Array<{ id: string; travelModeToNext?: string }> }) =>
+        day.activities,
+    );
+    await route.fulfill({ response, body: JSON.stringify(body) });
+  });
+  await page.route('**/api/trips/*/days/*/route', async (route) => {
+    const [from, to] = mappedActivities;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        tripId: 'browser-trip',
+        dayId: 'browser-day',
+        status: 'complete',
+        totalDistanceMeters: 1200,
+        totalDurationSeconds: 600,
+        unlocatedActivityIds: [],
+        generatedAt: new Date().toISOString(),
+        provider: 'mock',
+        attribution: 'Ruta — proveedor simulado para pruebas',
+        disclaimer: 'Ruta simulada: comprueba tiempos y señalización.',
+        legs: from && to ? [{
+          fromActivityId: from.id,
+          toActivityId: to.id,
+          mode: 'cycling',
+          distanceMeters: 1200,
+          durationSeconds: 600,
+          availableSeconds: 300,
+          scheduleStatus: 'conflict',
+          geometry: {
+            type: 'LineString',
+            coordinates: [[2.1619, 41.3954], [2.17, 41.4]],
+          },
+        }] : [],
       }),
     });
   });
@@ -102,6 +162,27 @@ test('registro, viaje, borrador IA, gasto y persistencia tras recargar', async (
   await page.getByRole('button', { name: 'Guardar actividad' }).click();
   await expect(page.getByText('Paseo E2E editado')).toBeVisible();
 
+  await page.getByRole('button', { name: 'itinerario', exact: true }).click();
+  await page.getByRole('button', { name: '+ Añadir actividad' }).click();
+  await page.getByLabel('Título').fill('Almuerzo E2E');
+  await page.getByLabel('Hora').fill('10:05');
+  await page.getByLabel('Usar un lugar guardado').selectOption({ label: 'Casa Milà E2E · Barcelona' });
+  await page.getByRole('button', { name: 'Guardar actividad' }).click();
+
+  await page.getByRole('button', { name: 'mapa', exact: true }).click();
+  await page.getByRole('button', { name: /Día 1/ }).click();
+  await expect(page.getByText('Ruta calculada')).toBeVisible();
+  await expect(page.getByText('1.2 km', { exact: true })).toBeVisible();
+  const modeUpdate = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'PATCH' &&
+      response.url().includes('/api/activities/'),
+  );
+  await page.getByLabel('Hasta Almuerzo E2E').selectOption('cycling');
+  expect((await (await modeUpdate).json()).travelModeToNext).toBe('cycling');
+  await expect(page.getByText('Medio de transporte actualizado.')).toBeVisible();
+  await expect(page.getByText('El trayecto supera el tiempo disponible.')).toBeVisible();
+
   await page.getByRole('button', { name: 'presupuesto', exact: true }).click();
   await page.getByRole('button', { name: '+ Añadir gasto' }).click();
   await page.getByLabel('Concepto').fill('Café E2E');
@@ -122,6 +203,9 @@ test('registro, viaje, borrador IA, gasto y persistencia tras recargar', async (
   await page.getByRole('button', { name: 'mapa', exact: true }).click();
   await expect(page.getByText('Casa Milà E2E').first()).toBeVisible();
   await expect(page.getByText('Paseo E2E editado')).toBeVisible();
+  await page.getByRole('button', { name: /Día 1/ }).click();
+  expect(mappedActivities[0]?.travelModeToNext).toBe('cycling');
+  await expect(page.getByLabel('Hasta Almuerzo E2E')).toHaveValue('cycling');
 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole('button', { name: 'Abrir menú' })).toBeVisible();

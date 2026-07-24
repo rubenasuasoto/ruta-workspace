@@ -19,9 +19,13 @@ npm start
 
 Abre `http://localhost:4200`. El proxy local envía `/api` a NestJS.
 
-El acceso con Google permanece deshabilitado hasta añadir el identificador público en `src/environments/environment.ts`. Las claves privadas nunca pertenecen al repositorio Angular.
+## Mapas y rutas
 
-La URL y atribución de teselas se configuran en los archivos de entorno mediante `mapTiles`. El mapa dibuja marcadores y el orden previsto de las actividades, no rutas reales, navegación, disponibilidad ni tiempos de viaje.
+La configuración pública se obtiene desde `/config/public`. El acceso con Google permanece deshabilitado mientras `GOOGLE_CLIENT_ID` esté vacío en `ruta-api/.env`.
+
+El mapa conserva Leaflet y utiliza teselas de OpenStreetMap. Al seleccionar un día calcula rutas por tramo con los medios guardados en cada actividad y muestra distancia, duración, atribución y conflictos horarios. No incluye navegación giro a giro, tráfico en directo ni optimización del orden.
+
+Para activar rutas y búsqueda geográfica crea una clave gratuita de HeiGIT, guárdala como `OPENROUTESERVICE_API_KEY` en `ruta-api/.env` y define `ROUTING_PROVIDER=openrouteservice` y `GEOCODING_PROVIDER=openrouteservice`. La clave permanece siempre en NestJS.
 
 ## Cliente OpenAPI
 
@@ -41,4 +45,4 @@ npm test -- --watch=false
 npm run test:e2e
 ```
 
-Playwright utiliza la API y PostgreSQL reales, simula la generación de IA y la búsqueda geográfica, bloquea las teselas externas y elimina sus propias cuentas `e2e-browser-*` antes y después del flujo.
+Playwright utiliza la API y PostgreSQL reales, simula la generación de IA, las rutas y la búsqueda geográfica, bloquea las teselas externas y elimina sus propias cuentas `e2e-browser-*` antes y después del flujo.

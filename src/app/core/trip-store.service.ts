@@ -35,10 +35,22 @@ export class TripStore {
   readonly importDismissed = signal(false);
   readonly totalPlanned = computed(() => this.trips().reduce((sum, trip) => sum + trip.budget, 0));
 
-  trip(id: string): Trip | undefined { return this.trips().find((item) => item.id === id); }
-  daysFor(tripId: string): ItineraryDay[] { return this.days().filter((day) => day.tripId === tripId).sort((a, b) => a.date.localeCompare(b.date)); }
-  expensesFor(tripId: string): Expense[] { return this.expenses().filter((expense) => expense.tripId === tripId).sort((a, b) => b.date.localeCompare(a.date)); }
-  spentFor(tripId: string): number { return this.expensesFor(tripId).reduce((sum, expense) => sum + expense.amount, 0); }
+  trip(id: string): Trip | undefined {
+    return this.trips().find((item) => item.id === id);
+  }
+  daysFor(tripId: string): ItineraryDay[] {
+    return this.days()
+      .filter((day) => day.tripId === tripId)
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }
+  expensesFor(tripId: string): Expense[] {
+    return this.expenses()
+      .filter((expense) => expense.tripId === tripId)
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }
+  spentFor(tripId: string): number {
+    return this.expensesFor(tripId).reduce((sum, expense) => sum + expense.amount, 0);
+  }
 
   async load(): Promise<void> {
     this.loading.set(true);
@@ -59,12 +71,20 @@ export class TripStore {
   }
 
   reset(): void {
-    this.trips.set([]); this.days.set([]); this.expenses.set([]); this.places.set([]);
-    this.initialized.set(false); this.error.set(null); this.loading.set(false);
-    this.localImportAvailable.set(false); this.importDismissed.set(false);
+    this.trips.set([]);
+    this.days.set([]);
+    this.expenses.set([]);
+    this.places.set([]);
+    this.initialized.set(false);
+    this.error.set(null);
+    this.loading.set(false);
+    this.localImportAvailable.set(false);
+    this.importDismissed.set(false);
   }
 
-  async retry(): Promise<void> { await this.load(); }
+  async retry(): Promise<void> {
+    await this.load();
+  }
 
   async createTrip(input: Omit<Trip, 'id'>): Promise<Trip> {
     return this.mutate(async () => {
@@ -79,7 +99,9 @@ export class TripStore {
     await this.mutate(async () => {
       const { id, ...body } = trip;
       const updated = await this.api.invoke(tripsControllerUpdate, { tripId: id, body });
-      this.trips.update((items) => items.map((item) => item.id === trip.id ? updated as Trip : item));
+      this.trips.update((items) =>
+        items.map((item) => (item.id === trip.id ? (updated as Trip) : item)),
+      );
       await this.load();
     });
   }
@@ -95,31 +117,131 @@ export class TripStore {
 
   async addActivity(dayId: string, input: Omit<Activity, 'id'>): Promise<void> {
     await this.mutate(async () => {
-      const { title, time, kind, cost, notes, completed, savedPlaceId, locationName, address, latitude, longitude } = input;
-      const activity = await this.api.invoke(tripsControllerAddActivity, { dayId, body: { title, time, kind, cost, notes, completed, savedPlaceId, locationName, address, latitude, longitude } });
-      this.days.update((items) => items.map((day) => day.id === dayId ? { ...day, activities: [...day.activities, activity as Activity].sort((a, b) => (a.position ?? 0) - (b.position ?? 0)) } : day));
+      const {
+        title,
+        time,
+        kind,
+        cost,
+        notes,
+        completed,
+        savedPlaceId,
+        locationName,
+        address,
+        latitude,
+        longitude,
+        travelModeToNext,
+      } = input;
+      const activity = await this.api.invoke(tripsControllerAddActivity, {
+        dayId,
+        body: {
+          title,
+          time,
+          kind,
+          cost,
+          notes,
+          completed,
+          savedPlaceId,
+          locationName,
+          address,
+          latitude,
+          longitude,
+          travelModeToNext,
+        },
+      });
+      this.days.update((items) =>
+        items.map((day) =>
+          day.id === dayId
+            ? {
+                ...day,
+                activities: [...day.activities, activity as Activity].sort(
+                  (a, b) => (a.position ?? 0) - (b.position ?? 0),
+                ),
+              }
+            : day,
+        ),
+      );
     });
   }
 
   async updateActivity(dayId: string, activity: Activity): Promise<void> {
     await this.mutate(async () => {
-      const { title, time, kind, cost, notes, completed, savedPlaceId, locationName, address, latitude, longitude } = activity;
-      const updated = await this.api.invoke(tripsControllerUpdateActivity, { activityId: activity.id, body: { title, time, kind, cost, notes, completed, savedPlaceId, locationName, address, latitude, longitude } });
-      this.days.update((items) => items.map((day) => day.id === dayId ? { ...day, activities: day.activities.map((item) => item.id === activity.id ? updated as Activity : item) } : day));
+      const {
+        title,
+        time,
+        kind,
+        cost,
+        notes,
+        completed,
+        savedPlaceId,
+        locationName,
+        address,
+        latitude,
+        longitude,
+        travelModeToNext,
+      } = activity;
+      const updated = await this.api.invoke(tripsControllerUpdateActivity, {
+        activityId: activity.id,
+        body: {
+          title,
+          time,
+          kind,
+          cost,
+          notes,
+          completed,
+          savedPlaceId,
+          locationName,
+          address,
+          latitude,
+          longitude,
+          travelModeToNext,
+        },
+      });
+      this.days.update((items) =>
+        items.map((day) =>
+          day.id === dayId
+            ? {
+                ...day,
+                activities: day.activities.map((item) =>
+                  item.id === activity.id ? (updated as Activity) : item,
+                ),
+              }
+            : day,
+        ),
+      );
     });
   }
 
   async toggleActivity(dayId: string, activityId: string): Promise<void> {
     await this.mutate(async () => {
       const updated = await this.api.invoke(tripsControllerToggleActivity, { activityId });
-      this.days.update((items) => items.map((day) => day.id === dayId ? { ...day, activities: day.activities.map((item) => item.id === activityId ? updated as Activity : item) } : day));
+      this.days.update((items) =>
+        items.map((day) =>
+          day.id === dayId
+            ? {
+                ...day,
+                activities: day.activities.map((item) =>
+                  item.id === activityId ? (updated as Activity) : item,
+                ),
+              }
+            : day,
+        ),
+      );
     });
   }
 
   async removeActivity(dayId: string, activityId: string): Promise<void> {
     await this.mutate(async () => {
       await this.api.invoke(tripsControllerRemoveActivity, { activityId });
-      this.days.update((items) => items.map((day) => day.id === dayId ? { ...day, activities: day.activities.filter((activity) => activity.id !== activityId) } : day));
+      this.days.update((items) =>
+        items.map((day) =>
+          day.id === dayId
+            ? {
+                ...day,
+                activities: day.activities.filter((activity) => activity.id !== activityId),
+              }
+            : day,
+        ),
+      );
     });
   }
 
@@ -132,15 +254,23 @@ export class TripStore {
     if (index < 0 || target < 0 || target >= ids.length) return;
     [ids[index], ids[target]] = [ids[target], ids[index]];
     await this.mutate(async () => {
-      const updated = await this.api.invoke(tripsControllerReorder, { dayId, body: { activityIds: ids } });
-      this.days.update((items) => items.map((item) => item.id === dayId ? updated as ItineraryDay : item));
+      const updated = await this.api.invoke(tripsControllerReorder, {
+        dayId,
+        body: { activityIds: ids },
+      });
+      this.days.update((items) =>
+        items.map((item) => (item.id === dayId ? (updated as ItineraryDay) : item)),
+      );
     });
   }
 
   async addExpense(input: Omit<Expense, 'id'>): Promise<void> {
     await this.mutate(async () => {
       const { title, category, amount, date } = input;
-      const expense = await this.api.invoke(tripsControllerAddExpense, { tripId: input.tripId, body: { title, category, amount, date } });
+      const expense = await this.api.invoke(tripsControllerAddExpense, {
+        tripId: input.tripId,
+        body: { title, category, amount, date },
+      });
       this.expenses.update((items) => [expense as Expense, ...items]);
     });
   }
@@ -156,7 +286,9 @@ export class TripStore {
     await this.mutate(async () => {
       const { id, tripId: _tripId, ...body } = expense;
       const updated = await this.api.invoke(tripsControllerUpdateExpense, { expenseId: id, body });
-      this.expenses.update((items) => items.map((item) => item.id === id ? updated as Expense : item));
+      this.expenses.update((items) =>
+        items.map((item) => (item.id === id ? (updated as Expense) : item)),
+      );
     });
   }
 
@@ -171,7 +303,9 @@ export class TripStore {
     await this.mutate(async () => {
       const { id, ...body } = place;
       const updated = await this.api.invoke(placesControllerUpdate, { placeId: id, body });
-      this.places.update((items) => items.map((item) => item.id === id ? updated as SavedPlace : item));
+      this.places.update((items) =>
+        items.map((item) => (item.id === id ? (updated as SavedPlace) : item)),
+      );
     });
   }
 
@@ -179,8 +313,13 @@ export class TripStore {
     const current = this.places().find((place) => place.id === placeId);
     if (!current) return;
     await this.mutate(async () => {
-      const place = await this.api.invoke(placesControllerUpdate, { placeId, body: { visited: !current.visited } });
-      this.places.update((items) => items.map((item) => item.id === placeId ? place as SavedPlace : item));
+      const place = await this.api.invoke(placesControllerUpdate, {
+        placeId,
+        body: { visited: !current.visited },
+      });
+      this.places.update((items) =>
+        items.map((item) => (item.id === placeId ? (place as SavedPlace) : item)),
+      );
     });
   }
 
@@ -204,7 +343,9 @@ export class TripStore {
     });
   }
 
-  dismissImport(): void { this.importDismissed.set(true); }
+  dismissImport(): void {
+    this.importDismissed.set(true);
+  }
 
   async seedDemo(): Promise<void> {
     await this.mutate(async () => {

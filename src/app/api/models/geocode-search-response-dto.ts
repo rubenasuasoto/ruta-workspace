@@ -3,6 +3,7 @@
 
 import { GeocodeResultDto } from '../models/geocode-result-dto';
 export interface GeocodeSearchResponseDto {
+  attribution: string;
   results: Array<GeocodeResultDto>;
   stale: boolean;
 }
