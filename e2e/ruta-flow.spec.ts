@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 test('registro, viaje, borrador IA, gasto y persistencia tras recargar', async ({ page }) => {
+  test.setTimeout(90_000);
   const email = `e2e-browser-${Date.now()}@ruta.local`;
   await page.addInitScript(() => {
     localStorage.setItem('ruta.travel-journal.v1', JSON.stringify({
@@ -32,6 +33,24 @@ test('registro, viaje, borrador IA, gasto y persistencia tras recargar', async (
       }),
     });
   });
+  await page.route('**/api/geo/search**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        stale: false,
+        results: [{
+          id: 'node:123',
+          label: 'Casa Milà, Barcelona, España',
+          category: 'museum',
+          latitude: 41.3954,
+          longitude: 2.1619,
+          bbox: [2.16, 41.39, 2.17, 41.4],
+        }],
+      }),
+    });
+  });
+  await page.route('https://*.tile.openstreetmap.org/**', (route) => route.abort());
 
   await page.goto('/registro');
   await page.getByLabel('Nombre').fill('Ruta Browser E2E');
@@ -41,6 +60,18 @@ test('registro, viaje, borrador IA, gasto y persistencia tras recargar', async (
   await expect(page).toHaveURL('/');
   await expect(page.getByText('Encontramos tu cuaderno anterior')).toBeVisible();
   await page.getByRole('button', { name: 'Más tarde' }).click();
+
+  await page.goto('/lugares');
+  await expect(page).toHaveURL('/lugares');
+  await page.getByRole('button', { name: '+ Guardar lugar' }).click();
+  await page.getByLabel('Nombre').fill('Casa Milà E2E');
+  await page.getByLabel('Ciudad').fill('Barcelona');
+  await page.getByLabel('País').fill('España');
+  await page.getByRole('textbox', { name: 'Ubicación' }).fill('Casa Milà Barcelona');
+  await page.getByRole('button', { name: 'Buscar', exact: true }).click();
+  await page.getByRole('button', { name: /Casa Milà, Barcelona/ }).click();
+  await page.getByRole('button', { name: 'Guardar lugar', exact: true }).click();
+  await expect(page.getByText('Casa Milà E2E').first()).toBeVisible();
 
   await page.getByRole('link', { name: 'Mis viajes', exact: true }).click();
   await page.getByRole('button', { name: '+ Nuevo viaje' }).click();
@@ -62,6 +93,15 @@ test('registro, viaje, borrador IA, gasto y persistencia tras recargar', async (
   await page.getByRole('button', { name: 'Guardar selección' }).click();
   await expect(page.getByText('Paseo E2E editado')).toBeVisible();
 
+  await page.getByRole('button', { name: 'mapa', exact: true }).click();
+  await page.getByLabel('Añadir un lugar guardado').selectOption({ label: 'Casa Milà E2E · Barcelona' });
+  await page.getByRole('button', { name: 'Vincular', exact: true }).click();
+  await expect(page.getByText('Casa Milà E2E').first()).toBeVisible();
+  await page.getByRole('button', { name: /Paseo E2E editado.*Ubicar/ }).click();
+  await page.getByLabel('Usar un lugar guardado').selectOption({ label: 'Casa Milà E2E · Barcelona' });
+  await page.getByRole('button', { name: 'Guardar actividad' }).click();
+  await expect(page.getByText('Paseo E2E editado')).toBeVisible();
+
   await page.getByRole('button', { name: 'presupuesto', exact: true }).click();
   await page.getByRole('button', { name: '+ Añadir gasto' }).click();
   await page.getByLabel('Concepto').fill('Café E2E');
@@ -69,12 +109,19 @@ test('registro, viaje, borrador IA, gasto y persistencia tras recargar', async (
   await page.getByLabel('Fecha').fill('2026-09-01');
   await page.getByRole('button', { name: 'Guardar gasto' }).click();
   await expect(page.getByText('Café E2E')).toBeVisible();
+  await page.getByRole('button', { name: 'Editar Café E2E' }).click();
+  await page.getByLabel('Importe (€)').fill('6.25');
+  await page.getByRole('button', { name: 'Guardar gasto' }).click();
 
   await page.reload();
   await page.getByRole('button', { name: 'itinerario', exact: true }).click();
   await expect(page.getByText('Paseo E2E editado')).toBeVisible();
   await page.getByRole('button', { name: 'presupuesto', exact: true }).click();
   await expect(page.getByText('Café E2E')).toBeVisible();
+  await expect(page.locator('.expense').filter({ hasText: 'Café E2E' })).toContainText('6');
+  await page.getByRole('button', { name: 'mapa', exact: true }).click();
+  await expect(page.getByText('Casa Milà E2E').first()).toBeVisible();
+  await expect(page.getByText('Paseo E2E editado')).toBeVisible();
 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole('button', { name: 'Abrir menú' })).toBeVisible();

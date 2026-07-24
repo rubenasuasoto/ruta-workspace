@@ -64,6 +64,7 @@ export class ItineraryAiService {
         cost: activity.estimatedCost,
         notes: activity.notes.trim(),
         completed: false,
+        savedPlaceId: activity.savedPlaceId ?? null,
       }))) ?? [];
     if (!activities.length) {
       this.error.set('Selecciona al menos una actividad para guardarla.');

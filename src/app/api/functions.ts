@@ -27,6 +27,12 @@ export type { TripsControllerUpdate$Params as TripsControllerUpdate$Params } fro
 export { tripsControllerUpdate as tripsControllerUpdate } from './fn/trips/trips-controller-update';
 export type { TripsControllerDays$Params as TripsControllerDays$Params } from './fn/trips/trips-controller-days';
 export { tripsControllerDays as tripsControllerDays } from './fn/trips/trips-controller-days';
+export type { TripsControllerMap$Params as TripsControllerMap$Params } from './fn/trips/trips-controller-map';
+export { tripsControllerMap as tripsControllerMap } from './fn/trips/trips-controller-map';
+export type { TripsControllerAttachPlace$Params as TripsControllerAttachPlace$Params } from './fn/trips/trips-controller-attach-place';
+export { tripsControllerAttachPlace as tripsControllerAttachPlace } from './fn/trips/trips-controller-attach-place';
+export type { TripsControllerDetachPlace$Params as TripsControllerDetachPlace$Params } from './fn/trips/trips-controller-detach-place';
+export { tripsControllerDetachPlace as tripsControllerDetachPlace } from './fn/trips/trips-controller-detach-place';
 export type { TripsControllerAddActivity$Params as TripsControllerAddActivity$Params } from './fn/trips/trips-controller-add-activity';
 export { tripsControllerAddActivity as tripsControllerAddActivity } from './fn/trips/trips-controller-add-activity';
 export type { TripsControllerRemoveActivity$Params as TripsControllerRemoveActivity$Params } from './fn/trips/trips-controller-remove-activity';
@@ -45,6 +51,8 @@ export type { TripsControllerAddExpense$Params as TripsControllerAddExpense$Para
 export { tripsControllerAddExpense as tripsControllerAddExpense } from './fn/trips/trips-controller-add-expense';
 export type { TripsControllerRemoveExpense$Params as TripsControllerRemoveExpense$Params } from './fn/trips/trips-controller-remove-expense';
 export { tripsControllerRemoveExpense as tripsControllerRemoveExpense } from './fn/trips/trips-controller-remove-expense';
+export type { TripsControllerUpdateExpense$Params as TripsControllerUpdateExpense$Params } from './fn/trips/trips-controller-update-expense';
+export { tripsControllerUpdateExpense as tripsControllerUpdateExpense } from './fn/trips/trips-controller-update-expense';
 export type { PlacesControllerList$Params as PlacesControllerList$Params } from './fn/places/places-controller-list';
 export { placesControllerList as placesControllerList } from './fn/places/places-controller-list';
 export type { PlacesControllerCreate$Params as PlacesControllerCreate$Params } from './fn/places/places-controller-create';
@@ -61,3 +69,5 @@ export type { ImportsControllerImport$Params as ImportsControllerImport$Params }
 export { importsControllerImport as importsControllerImport } from './fn/imports/imports-controller-import';
 export type { AiControllerGenerate$Params as AiControllerGenerate$Params } from './fn/ai/ai-controller-generate';
 export { aiControllerGenerate as aiControllerGenerate } from './fn/ai/ai-controller-generate';
+export type { GeocodingControllerSearch$Params as GeocodingControllerSearch$Params } from './fn/geo/geocoding-controller-search';
+export { geocodingControllerSearch as geocodingControllerSearch } from './fn/geo/geocoding-controller-search';

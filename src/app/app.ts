@@ -2,10 +2,11 @@ import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthStore } from './auth/auth.store';
 import { TripStore } from './core/trip-store.service';
+import { FeedbackComponent } from './core/feedback.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, FeedbackComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })

@@ -6,6 +6,7 @@ export interface DraftActivityDto {
   id: string;
   kind: 'comida' | 'cultura' | 'naturaleza' | 'traslado' | 'alojamiento' | 'otro';
   notes: string;
+  savedPlaceId?: string | null;
   selected: boolean;
   time: string;
   title: string;

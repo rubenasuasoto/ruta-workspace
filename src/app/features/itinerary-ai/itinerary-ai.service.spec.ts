@@ -48,8 +48,9 @@ describe('ItineraryAiService', () => {
           time: '10:00',
           kind: 'cultura',
           cost: undefined,
-          notes: '',
-          completed: false,
+            notes: '',
+            completed: false,
+            savedPlaceId: null,
         }],
       },
     });
