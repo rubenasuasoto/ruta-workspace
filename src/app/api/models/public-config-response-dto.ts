@@ -7,4 +7,6 @@ export interface PublicConfigResponseDto {
   googleClientId: string;
   mapTiles: PublicMapTilesDto;
   routingEnabled: boolean;
+  turnstileEnabled: boolean;
+  turnstileSiteKey: string;
 }

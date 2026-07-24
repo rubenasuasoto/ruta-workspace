@@ -5,13 +5,16 @@ test('registro, viaje, borrador IA, gasto y persistencia tras recargar', async (
   const email = `e2e-browser-${Date.now()}@ruta.local`;
   let mappedActivities: Array<{ id: string; travelModeToNext?: string }> = [];
   await page.addInitScript(() => {
-    localStorage.setItem('ruta.travel-journal.v1', JSON.stringify({
-      version: 1,
-      trips: [],
-      days: [],
-      expenses: [],
-      places: [],
-    }));
+    localStorage.setItem(
+      'ruta.travel-journal.v1',
+      JSON.stringify({
+        version: 1,
+        trips: [],
+        days: [],
+        expenses: [],
+        places: [],
+      }),
+    );
   });
   await page.route('**/api/trips/*/ai-itinerary', async (route) => {
     await route.fulfill({
@@ -19,18 +22,22 @@ test('registro, viaje, borrador IA, gasto y persistencia tras recargar', async (
       contentType: 'application/json',
       body: JSON.stringify({
         disclaimer: 'Las sugerencias, horarios y costes son estimaciones. Compruébalos.',
-        days: [{
-          date: '2026-09-01',
-          activities: [{
-            id: 'draft-e2e',
-            title: 'Paseo sugerido',
-            time: '10:00',
-            kind: 'cultura',
-            estimatedCost: 12,
-            notes: 'Sugerencia simulada para E2E',
-            selected: true,
-          }],
-        }],
+        days: [
+          {
+            date: '2026-09-01',
+            activities: [
+              {
+                id: 'draft-e2e',
+                title: 'Paseo sugerido',
+                time: '10:00',
+                kind: 'cultura',
+                estimatedCost: 12,
+                notes: 'Sugerencia simulada para E2E',
+                selected: true,
+              },
+            ],
+          },
+        ],
       }),
     });
   });
@@ -41,14 +48,16 @@ test('registro, viaje, borrador IA, gasto y persistencia tras recargar', async (
       body: JSON.stringify({
         stale: false,
         attribution: '© openrouteservice.org by HeiGIT | Map data © OpenStreetMap contributors',
-        results: [{
-          id: 'node:123',
-          label: 'Casa Milà, Barcelona, España',
-          category: 'museum',
-          latitude: 41.3954,
-          longitude: 2.1619,
-          bbox: [2.16, 41.39, 2.17, 41.4],
-        }],
+        results: [
+          {
+            id: 'node:123',
+            label: 'Casa Milà, Barcelona, España',
+            category: 'museum',
+            latitude: 41.3954,
+            longitude: 2.1619,
+            bbox: [2.16, 41.39, 2.17, 41.4],
+          },
+        ],
       }),
     });
   });
@@ -58,6 +67,8 @@ test('registro, viaje, borrador IA, gasto y persistencia tras recargar', async (
       contentType: 'application/json',
       body: JSON.stringify({
         googleClientId: '',
+        turnstileEnabled: false,
+        turnstileSiteKey: '',
         routingEnabled: true,
         geocodingEnabled: true,
         mapTiles: {
@@ -73,8 +84,7 @@ test('registro, viaje, borrador IA, gasto y persistencia tras recargar', async (
     const response = await route.fetch();
     const body = await response.json();
     mappedActivities = body.days.flatMap(
-      (day: { activities: Array<{ id: string; travelModeToNext?: string }> }) =>
-        day.activities,
+      (day: { activities: Array<{ id: string; travelModeToNext?: string }> }) => day.activities,
     );
     await route.fulfill({ response, body: JSON.stringify(body) });
   });
@@ -94,19 +104,27 @@ test('registro, viaje, borrador IA, gasto y persistencia tras recargar', async (
         provider: 'mock',
         attribution: 'Ruta — proveedor simulado para pruebas',
         disclaimer: 'Ruta simulada: comprueba tiempos y señalización.',
-        legs: from && to ? [{
-          fromActivityId: from.id,
-          toActivityId: to.id,
-          mode: 'cycling',
-          distanceMeters: 1200,
-          durationSeconds: 600,
-          availableSeconds: 300,
-          scheduleStatus: 'conflict',
-          geometry: {
-            type: 'LineString',
-            coordinates: [[2.1619, 41.3954], [2.17, 41.4]],
-          },
-        }] : [],
+        legs:
+          from && to
+            ? [
+                {
+                  fromActivityId: from.id,
+                  toActivityId: to.id,
+                  mode: 'cycling',
+                  distanceMeters: 1200,
+                  durationSeconds: 600,
+                  availableSeconds: 300,
+                  scheduleStatus: 'conflict',
+                  geometry: {
+                    type: 'LineString',
+                    coordinates: [
+                      [2.1619, 41.3954],
+                      [2.17, 41.4],
+                    ],
+                  },
+                },
+              ]
+            : [],
       }),
     });
   });
@@ -117,6 +135,36 @@ test('registro, viaje, borrador IA, gasto y persistencia tras recargar', async (
   await page.getByLabel('Correo electrónico').fill(email);
   await page.getByLabel('Contraseña').fill('Ruta-browser-password-2026');
   await page.getByRole('button', { name: 'Crear cuenta' }).click();
+  await expect(page.getByRole('heading', { name: 'Revisa tu correo' })).toBeVisible();
+  let verificationToken = '';
+  await expect
+    .poll(
+      async () => {
+        const list = await page.request.get('http://localhost:8025/api/v1/messages');
+        if (!list.ok()) return '';
+        const body = (await list.json()) as {
+          messages?: Array<{
+            ID: string;
+            To?: Array<{ Address?: string }>;
+          }>;
+        };
+        const summary = body.messages?.find((message) =>
+          message.To?.some((recipient) => recipient.Address === email),
+        );
+        if (!summary) return '';
+        const detail = await page.request.get(`http://localhost:8025/api/v1/message/${summary.ID}`);
+        if (!detail.ok()) return '';
+        const message = (await detail.json()) as { Text?: string };
+        verificationToken = message.Text?.match(/verificar-correo\?token=([^\s]+)/)?.[1] ?? '';
+        return verificationToken;
+      },
+      { timeout: 15_000 },
+    )
+    .not.toBe('');
+  await page.goto(
+    `/verificar-correo?token=${encodeURIComponent(decodeURIComponent(verificationToken))}`,
+  );
+  await page.getByRole('button', { name: 'Ir a mis viajes' }).click();
   await expect(page).toHaveURL('/');
   await expect(page.getByText('Encontramos tu cuaderno anterior')).toBeVisible();
   await page.getByRole('button', { name: 'Más tarde' }).click();
@@ -154,11 +202,15 @@ test('registro, viaje, borrador IA, gasto y persistencia tras recargar', async (
   await expect(page.getByText('Paseo E2E editado')).toBeVisible();
 
   await page.getByRole('button', { name: 'mapa', exact: true }).click();
-  await page.getByLabel('Añadir un lugar guardado').selectOption({ label: 'Casa Milà E2E · Barcelona' });
+  await page
+    .getByLabel('Añadir un lugar guardado')
+    .selectOption({ label: 'Casa Milà E2E · Barcelona' });
   await page.getByRole('button', { name: 'Vincular', exact: true }).click();
   await expect(page.getByText('Casa Milà E2E').first()).toBeVisible();
   await page.getByRole('button', { name: /Paseo E2E editado.*Ubicar/ }).click();
-  await page.getByLabel('Usar un lugar guardado').selectOption({ label: 'Casa Milà E2E · Barcelona' });
+  await page
+    .getByLabel('Usar un lugar guardado')
+    .selectOption({ label: 'Casa Milà E2E · Barcelona' });
   await page.getByRole('button', { name: 'Guardar actividad' }).click();
   await expect(page.getByText('Paseo E2E editado')).toBeVisible();
 
@@ -166,7 +218,9 @@ test('registro, viaje, borrador IA, gasto y persistencia tras recargar', async (
   await page.getByRole('button', { name: '+ Añadir actividad' }).click();
   await page.getByLabel('Título').fill('Almuerzo E2E');
   await page.getByLabel('Hora').fill('10:05');
-  await page.getByLabel('Usar un lugar guardado').selectOption({ label: 'Casa Milà E2E · Barcelona' });
+  await page
+    .getByLabel('Usar un lugar guardado')
+    .selectOption({ label: 'Casa Milà E2E · Barcelona' });
   await page.getByRole('button', { name: 'Guardar actividad' }).click();
 
   await page.getByRole('button', { name: 'mapa', exact: true }).click();
@@ -175,8 +229,7 @@ test('registro, viaje, borrador IA, gasto y persistencia tras recargar', async (
   await expect(page.getByText('1.2 km', { exact: true })).toBeVisible();
   const modeUpdate = page.waitForResponse(
     (response) =>
-      response.request().method() === 'PATCH' &&
-      response.url().includes('/api/activities/'),
+      response.request().method() === 'PATCH' && response.url().includes('/api/activities/'),
   );
   await page.getByLabel('Hasta Almuerzo E2E').selectOption('cycling');
   expect((await (await modeUpdate).json()).travelModeToNext).toBe('cycling');
@@ -211,8 +264,12 @@ test('registro, viaje, borrador IA, gasto y persistencia tras recargar', async (
   await expect(page.getByRole('button', { name: 'Abrir menú' })).toBeVisible();
   await page.getByRole('button', { name: 'Abrir menú' }).click();
   await expect(page.getByRole('link', { name: 'Mis viajes', exact: true })).toBeVisible();
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
+  ).toBe(true);
 
   await page.setViewportSize({ width: 768, height: 1024 });
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
+  ).toBe(true);
 });

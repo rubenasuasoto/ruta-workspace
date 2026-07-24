@@ -7,15 +7,15 @@ import { filter, map } from 'rxjs/operators';
 import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
-import { PendingAuthResponseDto } from '../../models/pending-auth-response-dto';
-import { RegisterDto } from '../../models/register-dto';
+import { UpdateProfileDto } from '../../models/update-profile-dto';
+import { UserResponseDto } from '../../models/user-response-dto';
 
-export interface AuthControllerRegister$Params {
-      body: RegisterDto
+export interface AccountControllerUpdateProfile$Params {
+      body: UpdateProfileDto
 }
 
-export function authControllerRegister(http: HttpClient, rootUrl: string, params: AuthControllerRegister$Params, context?: HttpContext): Observable<StrictHttpResponse<PendingAuthResponseDto>> {
-  const rb = new RequestBuilder(rootUrl, authControllerRegister.PATH, 'post');
+export function accountControllerUpdateProfile(http: HttpClient, rootUrl: string, params: AccountControllerUpdateProfile$Params, context?: HttpContext): Observable<StrictHttpResponse<UserResponseDto>> {
+  const rb = new RequestBuilder(rootUrl, accountControllerUpdateProfile.PATH, 'patch');
   if (params) {
     rb.body(params.body, 'application/json');
   }
@@ -25,9 +25,9 @@ export function authControllerRegister(http: HttpClient, rootUrl: string, params
   ).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
-      return r as StrictHttpResponse<PendingAuthResponseDto>;
+      return r as StrictHttpResponse<UserResponseDto>;
     })
   );
 }
 
-authControllerRegister.PATH = '/auth/register';
+accountControllerUpdateProfile.PATH = '/me/profile';

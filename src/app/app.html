@@ -1,11 +1,28 @@
 <header class="topbar">
-  <a class="brand" routerLink="/" (click)="closeMenu()" aria-label="Ruta, inicio"><span>R</span> ruta</a>
+  <a class="brand" routerLink="/" (click)="closeMenu()" aria-label="Ruta, inicio"
+    ><span>R</span> ruta</a
+  >
   @if (auth.authenticated()) {
-    <button class="menu-button" type="button" (click)="menuOpen.set(!menuOpen())" [attr.aria-expanded]="menuOpen()" aria-label="Abrir menú">☰</button>
+    <button
+      class="menu-button"
+      type="button"
+      (click)="menuOpen.set(!menuOpen())"
+      [attr.aria-expanded]="menuOpen()"
+      aria-label="Abrir menú"
+    >
+      ☰
+    </button>
     <nav [class.open]="menuOpen()" aria-label="Navegación principal">
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMenu()">Inicio</a>
+      <a
+        routerLink="/"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="closeMenu()"
+        >Inicio</a
+      >
       <a routerLink="/viajes" routerLinkActive="active" (click)="closeMenu()">Mis viajes</a>
       <a routerLink="/lugares" routerLinkActive="active" (click)="closeMenu()">Lugares</a>
+      <a routerLink="/cuenta" routerLinkActive="active" (click)="closeMenu()"> Mi cuenta </a>
       <span class="user-name">{{ auth.user()?.name }}</span>
       <button class="logout" type="button" (click)="logout()">Salir</button>
     </nav>
@@ -17,7 +34,9 @@
   }
 </header>
 @if (auth.authenticated() && trips.loading() && !trips.initialized()) {
-  <div class="loading-line" role="status"><span></span><span class="sr-only">Cargando tus viajes</span></div>
+  <div class="loading-line" role="status">
+    <span></span><span class="sr-only">Cargando tus viajes</span>
+  </div>
 }
 <main><router-outlet /></main>
 <app-feedback />

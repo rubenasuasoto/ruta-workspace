@@ -7,6 +7,8 @@ describe('PublicConfigStore', () => {
   it('loads the public map configuration from the API', async () => {
     const invoke = vi.fn().mockResolvedValue({
       googleClientId: 'google-client',
+      turnstileEnabled: true,
+      turnstileSiteKey: 'turnstile-site',
       routingEnabled: true,
       geocodingEnabled: true,
       mapTiles: {
@@ -26,6 +28,8 @@ describe('PublicConfigStore', () => {
     expect(invoke).toHaveBeenCalledWith(publicConfigControllerGetPublicConfig);
     expect(store.routingEnabled()).toBe(true);
     expect(store.geocodingEnabled()).toBe(true);
+    expect(store.turnstileEnabled()).toBe(true);
+    expect(store.turnstileSiteKey()).toBe('turnstile-site');
     expect(store.mapTiles().provider).toBe('openstreetmap');
   });
 

@@ -3,6 +3,8 @@
 
 export interface UserResponseDto {
   email: string;
+  emailVerified: boolean;
   id: string;
   name: string;
+  providers: Array<'LOCAL' | 'GOOGLE'>;
 }

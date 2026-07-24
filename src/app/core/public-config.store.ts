@@ -14,6 +14,8 @@ export interface MapTilesConfig {
 export class PublicConfigStore {
   private readonly api = inject(Api);
   readonly googleClientId = signal('');
+  readonly turnstileEnabled = signal(false);
+  readonly turnstileSiteKey = signal('');
   readonly routingEnabled = signal(false);
   readonly geocodingEnabled = signal(false);
   readonly mapTiles = signal<MapTilesConfig>({
@@ -26,6 +28,8 @@ export class PublicConfigStore {
     try {
       const config = await this.api.invoke(publicConfigControllerGetPublicConfig);
       this.googleClientId.set(config.googleClientId);
+      this.turnstileEnabled.set(config.turnstileEnabled);
+      this.turnstileSiteKey.set(config.turnstileSiteKey);
       this.routingEnabled.set(config.routingEnabled);
       this.geocodingEnabled.set(config.geocodingEnabled);
       this.mapTiles.set(config.mapTiles);

@@ -1,13 +1,15 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthStore } from '../auth/auth.store';
 import { PublicConfigStore } from '../core/public-config.store';
 import { TripStore } from '../core/trip-store.service';
+import { GoogleSignInComponent } from '../features/account/google-sign-in.component';
+import { TurnstileComponent } from '../features/account/turnstile.component';
 
 @Component({
   selector: 'app-auth',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, GoogleSignInComponent, TurnstileComponent],
   template: `
     <section class="auth-shell">
       <div class="auth-story">
@@ -18,86 +20,123 @@ import { TripStore } from '../core/trip-store.service';
       </div>
 
       <div class="auth-panel">
-        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-          <p class="eyebrow">{{ isRegister() ? 'Una cuenta nueva' : 'Bienvenido de vuelta' }}</p>
-          <h2>{{ isRegister() ? 'Crea tu espacio' : 'Continúa el camino' }}</h2>
-          <p class="lead">
-            {{
-              isRegister()
-                ? 'Tus viajes serán privados y estarán disponibles al volver.'
-                : 'Accede a tus viajes, ideas y presupuestos.'
-            }}
-          </p>
+        @if (registrationPending()) {
+          <section class="pending-card" role="status">
+            <p class="eyebrow">Un paso más</p>
+            <h2>Revisa tu correo</h2>
+            <p>
+              Hemos enviado un enlace a <strong>{{ pendingEmail() }}</strong
+              >. Debes confirmarlo antes de acceder a tus viajes.
+            </p>
+            <a class="button coral" routerLink="/acceso">Volver al acceso</a>
+            <a class="resend-link" routerLink="/reenviar-verificacion">
+              Reenviar la verificación
+            </a>
+          </section>
+        } @else {
+          <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <p class="eyebrow">{{ isRegister() ? 'Una cuenta nueva' : 'Bienvenido de vuelta' }}</p>
+            <h2>{{ isRegister() ? 'Crea tu espacio' : 'Continúa el camino' }}</h2>
+            <p class="lead">
+              {{
+                isRegister()
+                  ? 'Tus viajes serán privados y estarán disponibles al volver.'
+                  : 'Accede a tus viajes, ideas y presupuestos.'
+              }}
+            </p>
 
-          @if (isRegister()) {
+            @if (isRegister()) {
+              <div class="field">
+                <label for="name">Nombre</label>
+                <input
+                  id="name"
+                  autocomplete="name"
+                  formControlName="name"
+                  placeholder="Cómo quieres que te llamemos"
+                />
+                @if (form.controls.name.touched && form.controls.name.invalid) {
+                  <span class="error">Indica tu nombre.</span>
+                }
+              </div>
+            }
             <div class="field">
-              <label for="name">Nombre</label>
+              <label for="email">Correo electrónico</label>
               <input
-                id="name"
-                autocomplete="name"
-                formControlName="name"
-                placeholder="Cómo quieres que te llamemos"
+                id="email"
+                type="email"
+                autocomplete="email"
+                formControlName="email"
+                placeholder="tu@correo.com"
               />
-              @if (form.controls.name.touched && form.controls.name.invalid) {
-                <span class="error">Indica tu nombre.</span>
+              @if (form.controls.email.touched && form.controls.email.invalid) {
+                <span class="error">Introduce un correo válido.</span>
               }
             </div>
-          }
-          <div class="field">
-            <label for="email">Correo electrónico</label>
-            <input
-              id="email"
-              type="email"
-              autocomplete="email"
-              formControlName="email"
-              placeholder="tu@correo.com"
-            />
-            @if (form.controls.email.touched && form.controls.email.invalid) {
-              <span class="error">Introduce un correo válido.</span>
+            @if (!isRegister()) {
+              <a class="forgot" routerLink="/recuperar-contrasena">
+                ¿Has olvidado tu contraseña?
+              </a>
             }
-          </div>
-          <div class="field">
-            <label for="password">Contraseña</label>
-            <input
-              id="password"
-              type="password"
-              [attr.autocomplete]="isRegister() ? 'new-password' : 'current-password'"
-              formControlName="password"
-            />
-            @if (form.controls.password.touched && form.controls.password.invalid) {
-              <span class="error">Debe tener al menos 10 caracteres.</span>
+
+            @if (isRegister() && publicConfig.turnstileEnabled()) {
+              <app-turnstile
+                [siteKey]="publicConfig.turnstileSiteKey()"
+                (tokenChange)="turnstileToken.set($event)"
+                (loadError)="widgetError.set(true)"
+              />
             }
-          </div>
+            @if (widgetError()) {
+              <p class="error" role="alert">
+                No se pudo cargar la comprobación de seguridad. Recarga la página.
+              </p>
+            }
+            <div class="field">
+              <label for="password">Contraseña</label>
+              <input
+                id="password"
+                type="password"
+                [attr.autocomplete]="isRegister() ? 'new-password' : 'current-password'"
+                formControlName="password"
+              />
+              @if (form.controls.password.touched && form.controls.password.invalid) {
+                <span class="error">Debe tener al menos 10 caracteres.</span>
+              }
+            </div>
 
-          @if (auth.error()) {
-            <div class="form-error" role="alert">{{ auth.error() }}</div>
-          }
-          <button class="button coral submit" type="submit" [disabled]="auth.loading()">
-            {{ auth.loading() ? 'Conectando…' : isRegister() ? 'Crear cuenta' : 'Acceder' }}
-          </button>
+            @if (auth.error()) {
+              <div class="form-error" role="alert">{{ auth.error() }}</div>
+            }
+            <button class="button coral submit" type="submit" [disabled]="auth.loading()">
+              {{ auth.loading() ? 'Conectando…' : isRegister() ? 'Crear cuenta' : 'Acceder' }}
+            </button>
 
-          <div class="divider"><span>o</span></div>
-          <button
-            class="google"
-            type="button"
-            disabled
-            [title]="
-              googleEnabled
-                ? 'Google estará disponible próximamente'
-                : 'Configura GOOGLE_CLIENT_ID para habilitarlo'
-            "
-          >
-            Acceder con Google
-            <small>{{ googleEnabled ? 'próximamente' : 'sin configurar' }}</small>
-          </button>
+            <div class="divider"><span>o</span></div>
+            @if (googleEnabled()) {
+              <app-google-sign-in
+                [clientId]="publicConfig.googleClientId()"
+                (credential)="loginWithGoogle($event)"
+                (loadError)="widgetError.set(true)"
+              />
+            } @else {
+              <button
+                class="google"
+                type="button"
+                disabled
+                title="Configura GOOGLE_CLIENT_ID para habilitarlo"
+              >
+                Acceder con Google
+                <small>sin configurar</small>
+              </button>
+            }
 
-          <p class="switch">
-            {{ isRegister() ? '¿Ya tienes cuenta?' : '¿Es tu primera ruta?' }}
-            <a [routerLink]="isRegister() ? '/acceso' : '/registro'">{{
-              isRegister() ? 'Accede' : 'Crea una cuenta'
-            }}</a>
-          </p>
-        </form>
+            <p class="switch">
+              {{ isRegister() ? '¿Ya tienes cuenta?' : '¿Es tu primera ruta?' }}
+              <a [routerLink]="isRegister() ? '/acceso' : '/registro'">{{
+                isRegister() ? 'Accede' : 'Crea una cuenta'
+              }}</a>
+            </p>
+          </form>
+        }
       </div>
     </section>
   `,
@@ -158,6 +197,25 @@ import { TripStore } from '../core/trip-store.service';
     }
     .field {
       margin-bottom: 1rem;
+    }
+    .forgot {
+      color: var(--deep);
+      display: inline-block;
+      font-size: 0.82rem;
+      margin: -0.35rem 0 0.8rem;
+    }
+    .pending-card {
+      max-width: 460px;
+    }
+    .pending-card p {
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+    .resend-link {
+      color: var(--deep);
+      display: block;
+      margin-top: 1rem;
     }
     .submit,
     .google {
@@ -237,10 +295,14 @@ export class AuthPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
-  private readonly publicConfig = inject(PublicConfigStore);
+  readonly publicConfig = inject(PublicConfigStore);
 
   readonly isRegister = computed(() => this.route.snapshot.data['mode'] === 'register');
-  readonly googleEnabled = this.publicConfig.googleClientId().length > 0;
+  readonly googleEnabled = computed(() => this.publicConfig.googleClientId().length > 0);
+  readonly registrationPending = signal(false);
+  readonly pendingEmail = signal('');
+  readonly turnstileToken = signal('');
+  readonly widgetError = signal(false);
   readonly form = this.fb.nonNullable.group({
     name: [''],
     email: ['', [Validators.required, Validators.email]],
@@ -257,13 +319,40 @@ export class AuthPage {
     }
     const { name, email, password } = this.form.getRawValue();
     try {
-      if (this.isRegister()) await this.auth.register(name.trim(), email.trim(), password);
-      else await this.auth.login(email.trim(), password);
-      await this.trips.load();
-      const requested = this.route.snapshot.queryParamMap.get('returnUrl');
-      await this.router.navigateByUrl(requested?.startsWith('/') ? requested : '/');
+      if (this.isRegister()) {
+        if (this.publicConfig.turnstileEnabled() && !this.turnstileToken()) {
+          this.widgetError.set(true);
+          return;
+        }
+        await this.auth.register(
+          name.trim(),
+          email.trim(),
+          password,
+          this.turnstileToken() || undefined,
+        );
+        this.pendingEmail.set(email.trim());
+        this.registrationPending.set(true);
+        return;
+      }
+      await this.auth.login(email.trim(), password);
+      await this.finishAuthentication();
     } catch {
       // AuthStore exposes the safe user-facing error.
     }
+  }
+
+  async loginWithGoogle(credential: string): Promise<void> {
+    try {
+      await this.auth.loginWithGoogle(credential);
+      await this.finishAuthentication();
+    } catch {
+      // AuthStore exposes the safe user-facing error.
+    }
+  }
+
+  private async finishAuthentication(): Promise<void> {
+    await this.trips.load();
+    const requested = this.route.snapshot.queryParamMap.get('returnUrl');
+    await this.router.navigateByUrl(requested?.startsWith('/') ? requested : '/');
   }
 }

@@ -7,15 +7,15 @@ import { filter, map } from 'rxjs/operators';
 import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
+import { EmailActionDto } from '../../models/email-action-dto';
 import { PendingAuthResponseDto } from '../../models/pending-auth-response-dto';
-import { RegisterDto } from '../../models/register-dto';
 
-export interface AuthControllerRegister$Params {
-      body: RegisterDto
+export interface AuthControllerResendVerification$Params {
+      body: EmailActionDto
 }
 
-export function authControllerRegister(http: HttpClient, rootUrl: string, params: AuthControllerRegister$Params, context?: HttpContext): Observable<StrictHttpResponse<PendingAuthResponseDto>> {
-  const rb = new RequestBuilder(rootUrl, authControllerRegister.PATH, 'post');
+export function authControllerResendVerification(http: HttpClient, rootUrl: string, params: AuthControllerResendVerification$Params, context?: HttpContext): Observable<StrictHttpResponse<PendingAuthResponseDto>> {
+  const rb = new RequestBuilder(rootUrl, authControllerResendVerification.PATH, 'post');
   if (params) {
     rb.body(params.body, 'application/json');
   }
@@ -30,4 +30,4 @@ export function authControllerRegister(http: HttpClient, rootUrl: string, params
   );
 }
 
-authControllerRegister.PATH = '/auth/register';
+authControllerResendVerification.PATH = '/auth/resend-verification';
