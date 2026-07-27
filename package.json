@@ -7,7 +7,12 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:coverage": "ng test --watch=false --coverage",
     "test:e2e": "playwright test",
+    "lint": "ng lint",
+    "lint:fix": "ng lint --fix",
+    "check:api": "npm run api:sync && git diff --exit-code -- src/app/api",
+    "check:security": "npm audit --omit=dev --audit-level=high",
     "api:generate": "ng-openapi-gen",
     "api:sync": "npm --prefix ../ruta-api run openapi:export && npm run api:generate"
   },
@@ -28,12 +33,18 @@
     "@angular/build": "^22.0.7",
     "@angular/cli": "^22.0.7",
     "@angular/compiler-cli": "^22.0.0",
+    "@axe-core/playwright": "^4.12.1",
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.61.1",
     "@types/leaflet": "^1.9.21",
+    "@vitest/coverage-v8": "^4.1.10",
+    "angular-eslint": "^22.1.0",
+    "eslint": "^10.8.0",
     "jsdom": "^28.0.0",
     "ng-openapi-gen": "^1.0.5",
     "prettier": "^3.8.1",
     "typescript": "~6.0.2",
+    "typescript-eslint": "^8.65.0",
     "vitest": "^4.0.8"
   }
 }

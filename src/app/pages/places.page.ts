@@ -1,16 +1,18 @@
 import { Component, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivityKind, MapPoint, SavedPlace } from '../core/models';
+import type { ActivityKind, MapPoint, SavedPlace } from '../core/models';
 import { FeedbackService } from '../core/feedback.service';
 import { TripStore } from '../core/trip-store.service';
+import type {
+  LocationSelection} from '../features/map/location-picker.component';
 import {
-  LocationPickerComponent,
-  LocationSelection,
+  LocationPickerComponent
 } from '../features/map/location-picker.component';
 import { TravelMapComponent } from '../features/map/travel-map.component';
+import type {
+  MediaSelection} from '../features/media/media-picker.component';
 import {
-  MediaPickerComponent,
-  MediaSelection,
+  MediaPickerComponent
 } from '../features/media/media-picker.component';
 
 @Component({
@@ -74,8 +76,13 @@ import {
       }
     </section>
     @if(showForm()){
-      <div class="modal-backdrop" (click)="closeForm()">
-        <form class="modal" [formGroup]="form" (ngSubmit)="save()" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="place-form-title">
+      <div
+        class="modal-backdrop"
+        tabindex="-1"
+        (click)="closeFromBackdrop($event)"
+        (keydown.escape)="closeForm()"
+      >
+        <form class="modal" [formGroup]="form" (ngSubmit)="save()" role="dialog" aria-modal="true" aria-labelledby="place-form-title">
           <header><div><p class="eyebrow">Para otro día</p><h2 id="place-form-title">{{editing()?'Editar lugar':'Guardar un lugar'}}</h2></div><button class="icon-button" type="button" (click)="closeForm()" aria-label="Cerrar">×</button></header>
           <div class="form-grid">
             <div class="field"><label for="place-name">Nombre</label><input id="place-name" formControlName="name" placeholder="Ej. Casa Milà">@if(form.controls.name.touched&&form.controls.name.invalid){<span class="error">Indica un nombre.</span>}</div>
@@ -197,6 +204,10 @@ export class PlacesPage {
 
   closeForm(): void {
     if (!this.saving()) this.showForm.set(false);
+  }
+
+  closeFromBackdrop(event: MouseEvent): void {
+    if (event.target === event.currentTarget) this.closeForm();
   }
 
   async save(): Promise<void> {

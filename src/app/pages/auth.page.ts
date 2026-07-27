@@ -17,17 +17,23 @@ import { GoogleSignInComponent } from '../features/account/google-sign-in.compon
   template: `
     <section class="auth-shell">
       <div class="auth-story">
-        <p class="eyebrow">Tu atlas personal</p>
+        <p class="eyebrow">Opción 1 · Demo guiada</p>
         <h1>Todo viaje empieza con un lugar donde imaginarlo.</h1>
         <p>
-          Un cuaderno privado para organizar rutas, gastos y lugares con las personas que tú eliges.
+          Recorre un viaje ficticio y descubre paso a paso el itinerario, el presupuesto, los mapas
+          y las decisiones técnicas del proyecto.
         </p>
+        <a class="button demo-button" routerLink="/demo" [queryParams]="{ tour: 1 }">
+          Explorar la demo guiada →
+        </a>
         <span>ruta · acceso privado por invitación</span>
       </div>
 
       <div class="auth-panel">
         <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-          <p class="eyebrow">{{ isRegister() ? 'Invitación privada' : 'Bienvenido de vuelta' }}</p>
+          <p class="eyebrow">
+            {{ isRegister() ? 'Invitación privada' : 'Opción 2 · Acceso privado' }}
+          </p>
           <h2>{{ isRegister() ? 'Crea tu espacio' : 'Continúa el camino' }}</h2>
           <p class="lead">
             {{
@@ -113,9 +119,6 @@ import { GoogleSignInComponent } from '../features/account/google-sign-in.compon
               Ruta es privada. Las cuentas nuevas necesitan una invitación personal.
             }
           </p>
-          <p class="demo-link">
-            <a routerLink="/demo">Explorar la demo pública con datos ficticios</a>
-          </p>
         </form>
       </div>
     </section>
@@ -154,6 +157,14 @@ import { GoogleSignInComponent } from '../features/account/google-sign-in.compon
       margin-top: 2rem;
       padding-top: 1rem;
       text-transform: uppercase;
+    }
+    .demo-button {
+      align-self: flex-start;
+      background: var(--coral);
+      border-color: var(--coral);
+      color: #fff;
+      margin-top: 1.25rem;
+      text-decoration: none;
     }
     .auth-panel {
       align-items: center;
@@ -218,15 +229,13 @@ import { GoogleSignInComponent } from '../features/account/google-sign-in.compon
       height: 1px;
       flex: 1;
     }
-    .switch,
-    .demo-link {
+    .switch {
       color: var(--muted);
       font-size: 0.84rem;
       margin: 1.4rem 0 0;
       text-align: center;
     }
-    .switch a,
-    .demo-link a {
+    .switch a {
       color: var(--coral);
       font-weight: 700;
     }

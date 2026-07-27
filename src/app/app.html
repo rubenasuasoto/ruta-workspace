@@ -31,7 +31,7 @@
       <span class="user-name">{{ auth.user()?.name }}</span>
       <button class="logout" type="button" (click)="logout()">Salir</button>
     </nav>
-  } @else if (auth.initialized()) {
+  } @else if (auth.initialized() || isDemo()) {
     <nav class="guest-nav" aria-label="Acceso">
       <a routerLink="/demo" routerLinkActive="active">Ver demo</a>
       <a routerLink="/acceso" routerLinkActive="active">Acceder</a>

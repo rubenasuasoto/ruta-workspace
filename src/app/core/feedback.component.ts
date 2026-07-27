@@ -1,6 +1,7 @@
+import type {
+  ElementRef} from '@angular/core';
 import {
   Component,
-  ElementRef,
   HostListener,
   ViewChild,
   effect,
@@ -20,7 +21,12 @@ import { FeedbackService } from './feedback.service';
       }
     </div>
     @if (feedback.confirmation(); as dialog) {
-      <div class="confirm-backdrop" (click)="feedback.answer(false)">
+      <div
+        class="confirm-backdrop"
+        tabindex="-1"
+        (click)="dismissFromBackdrop($event)"
+        (keydown.escape)="feedback.answer(false)"
+      >
         <section
           #dialogElement
           class="confirm-dialog"
@@ -29,7 +35,6 @@ import { FeedbackService } from './feedback.service';
           aria-labelledby="confirm-title"
           aria-describedby="confirm-message"
           tabindex="-1"
-          (click)="$event.stopPropagation()"
         >
           <p class="eyebrow">Confirmación</p>
           <h2 id="confirm-title">{{ dialog.title }}</h2>
@@ -62,6 +67,10 @@ export class FeedbackComponent {
         queueMicrotask(() => this.previousFocus?.focus());
       }
     });
+  }
+
+  dismissFromBackdrop(event: MouseEvent): void {
+    if (event.target === event.currentTarget) this.feedback.answer(false);
   }
 
   @HostListener('document:keydown', ['$event'])

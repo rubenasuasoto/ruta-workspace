@@ -12,9 +12,9 @@ import { authControllerResendVerification } from '../api/fn/auth/auth-controller
 import { authControllerResetPassword } from '../api/fn/auth/auth-controller-reset-password';
 import { authControllerVerifyEmail } from '../api/fn/auth/auth-controller-verify-email';
 import { invitationsControllerInspect } from '../api/fn/invitations/invitations-controller-inspect';
-import { PendingAuthResponseDto } from '../api/models/pending-auth-response-dto';
-import { InvitationInspectionDto } from '../api/models/invitation-inspection-dto';
-import { UserResponseDto } from '../api/models/user-response-dto';
+import type { PendingAuthResponseDto } from '../api/models/pending-auth-response-dto';
+import type { InvitationInspectionDto } from '../api/models/invitation-inspection-dto';
+import type { UserResponseDto } from '../api/models/user-response-dto';
 
 @Injectable({ providedIn: 'root' })
 export class AuthStore {

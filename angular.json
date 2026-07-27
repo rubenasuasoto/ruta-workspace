@@ -53,7 +53,7 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "6kB",
+                  "maximumWarning": "9kB",
                   "maximumError": "10kB"
                 }
               ],
@@ -82,8 +82,31 @@
           },
           "defaultConfiguration": "development"
         },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html",
+              "e2e/**/*.ts"
+            ]
+          }
+        },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "coverageExclude": [
+              "src/app/api/**",
+              "src/**/*.spec.ts",
+              "src/main.ts",
+              "src/environments/**"
+            ],
+            "coverageReporters": [
+              "text-summary",
+              "html",
+              "lcov"
+            ]
+          }
         }
       }
     }

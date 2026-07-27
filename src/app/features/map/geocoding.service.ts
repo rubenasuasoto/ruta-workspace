@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Api } from '../../api/api';
 import { geocodingControllerSearch } from '../../api/fn/geo/geocoding-controller-search';
-import { GeocodeResultDto } from '../../api/models/geocode-result-dto';
+import type { GeocodeResultDto } from '../../api/models/geocode-result-dto';
 import { PublicConfigStore } from '../../core/public-config.store';
 
 @Injectable({ providedIn: 'root' })

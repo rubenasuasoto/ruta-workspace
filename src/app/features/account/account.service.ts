@@ -9,7 +9,7 @@ import { authControllerReauthenticate } from '../../api/fn/auth/auth-controller-
 import { authControllerRevokeOtherSessions } from '../../api/fn/auth/auth-controller-revoke-other-sessions';
 import { authControllerRevokeSession } from '../../api/fn/auth/auth-controller-revoke-session';
 import { authControllerSessions } from '../../api/fn/auth/auth-controller-sessions';
-import { SessionResponseDto } from '../../api/models/session-response-dto';
+import type { SessionResponseDto } from '../../api/models/session-response-dto';
 import { AuthStore } from '../../auth/auth.store';
 
 @Injectable({ providedIn: 'root' })

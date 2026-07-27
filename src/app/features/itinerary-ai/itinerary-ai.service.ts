@@ -3,9 +3,9 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Api } from '../../api/api';
 import { aiControllerGenerate } from '../../api/fn/ai/ai-controller-generate';
 import { tripsControllerBatch } from '../../api/fn/trips/trips-controller-batch';
-import { AiItineraryDraftDto } from '../../api/models/ai-itinerary-draft-dto';
-import { DraftActivityDto } from '../../api/models/draft-activity-dto';
-import { GenerateItineraryDto } from '../../api/models/generate-itinerary-dto';
+import type { AiItineraryDraftDto } from '../../api/models/ai-itinerary-draft-dto';
+import type { DraftActivityDto } from '../../api/models/draft-activity-dto';
+import type { GenerateItineraryDto } from '../../api/models/generate-itinerary-dto';
 import { TripStore } from '../../core/trip-store.service';
 
 @Injectable()

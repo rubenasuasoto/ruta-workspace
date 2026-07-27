@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Api } from '../../api/api';
 import { legalControllerDocuments } from '../../api/fn/legal/legal-controller-documents';
-import { LegalDocumentDto } from '../../api/models/legal-document-dto';
+import type { LegalDocumentDto } from '../../api/models/legal-document-dto';
 
 @Injectable({ providedIn: 'root' })
 export class LegalStore {

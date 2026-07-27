@@ -14,10 +14,10 @@ import { routingControllerDayRoute } from '../../api/fn/routing/routing-controll
 import { tripsControllerAttachPlace } from '../../api/fn/trips/trips-controller-attach-place';
 import { tripsControllerDetachPlace } from '../../api/fn/trips/trips-controller-detach-place';
 import { tripsControllerMap } from '../../api/fn/trips/trips-controller-map';
-import { DayRouteResponseDto } from '../../api/models/day-route-response-dto';
-import { RouteLegResponseDto } from '../../api/models/route-leg-response-dto';
+import type { DayRouteResponseDto } from '../../api/models/day-route-response-dto';
+import type { RouteLegResponseDto } from '../../api/models/route-leg-response-dto';
 import { FeedbackService } from '../../core/feedback.service';
-import {
+import type {
   Activity,
   ItineraryDay,
   MapLine,
@@ -29,7 +29,7 @@ import { PublicConfigStore } from '../../core/public-config.store';
 import { TripStore } from '../../core/trip-store.service';
 import { TravelMapComponent } from './travel-map.component';
 
-const modes: Array<{ value: TravelMode; label: string; icon: string }> = [
+const modes: { value: TravelMode; label: string; icon: string }[] = [
   { value: 'walking', label: 'A pie', icon: '●' },
   { value: 'cycling', label: 'Bici', icon: '◆' },
   { value: 'driving', label: 'Coche', icon: '■' },
@@ -156,7 +156,7 @@ const modes: Array<{ value: TravelMode; label: string; icon: string }> = [
               <div class="route-stop">
                 <span class="stop-time">{{ activity.time }}</span>
                 <strong>{{ activity.title }}</strong>
-                @if (activity.latitude == null || activity.longitude == null) {
+                @if (activity.latitude === null || activity.longitude === null) {
                   <button
                     class="text-button"
                     type="button"
@@ -170,7 +170,7 @@ const modes: Array<{ value: TravelMode; label: string; icon: string }> = [
                 <div
                   class="leg-control"
                   [class.unavailable]="
-                    activity.latitude == null || day.activities[index + 1].latitude == null
+                    activity.latitude === null || day.activities[index + 1].latitude === null
                   "
                 >
                   <label [for]="'mode-' + activity.id"
@@ -200,7 +200,7 @@ const modes: Array<{ value: TravelMode; label: string; icon: string }> = [
                       <em role="status">Revisa el orden de las horas.</em>
                     }
                   } @else if (
-                    activity.latitude == null || day.activities[index + 1].latitude == null
+                    activity.latitude === null || day.activities[index + 1].latitude === null
                   ) {
                     <span>Ubica ambas actividades para calcularlo.</span>
                   }
@@ -248,7 +248,7 @@ const modes: Array<{ value: TravelMode; label: string; icon: string }> = [
                     ><strong>{{ place.name }}</strong
                     ><small
                       >{{ place.city }}, {{ place.country }}
-                      @if (place.latitude == null) {
+                      @if (place.latitude === null) {
                         · Sin ubicar
                       }
                     </small></span
@@ -704,7 +704,7 @@ export class TripMapComponent {
       }));
     return [...places, ...activities];
   });
-  readonly fallbackLine = computed<Array<[number, number]>>(() => {
+  readonly fallbackLine = computed<[number, number][]>(() => {
     if (!this.selectedDay()) return [];
     return this.visiblePoints()
       .filter((point) => point.marker === 'activity')

@@ -2,7 +2,7 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import {
+import type {
   Activity,
   ActivityKind,
   Expense,
@@ -13,9 +13,10 @@ import {
 import { TripStore } from '../core/trip-store.service';
 import { ItineraryAssistantComponent } from '../features/itinerary-ai/itinerary-assistant.component';
 import { TripMapComponent } from '../features/map/trip-map.component';
+import type {
+  LocationSelection} from '../features/map/location-picker.component';
 import {
-  LocationPickerComponent,
-  LocationSelection,
+  LocationPickerComponent
 } from '../features/map/location-picker.component';
 import { FeedbackService } from '../core/feedback.service';
 
@@ -292,12 +293,16 @@ type Tab = 'resumen' | 'itinerario' | 'presupuesto' | 'mapa';
       </section>
     }
     @if (showActivity()) {
-      <div class="modal-backdrop" (click)="closeActivity()">
+      <div
+        class="modal-backdrop"
+        tabindex="-1"
+        (click)="closeActivityFromBackdrop($event)"
+        (keydown.escape)="closeActivity()"
+      >
         <form
           class="modal wide"
           [formGroup]="activityForm"
           (ngSubmit)="saveActivity()"
-          (click)="$event.stopPropagation()"
           role="dialog"
           aria-modal="true"
           aria-labelledby="activity-dialog-title"
@@ -376,12 +381,16 @@ type Tab = 'resumen' | 'itinerario' | 'presupuesto' | 'mapa';
       </div>
     }
     @if (showExpense()) {
-      <div class="modal-backdrop" (click)="closeExpense()">
+      <div
+        class="modal-backdrop"
+        tabindex="-1"
+        (click)="closeExpenseFromBackdrop($event)"
+        (keydown.escape)="closeExpense()"
+      >
         <form
           class="modal"
           [formGroup]="expenseForm"
           (ngSubmit)="saveExpense()"
-          (click)="$event.stopPropagation()"
           role="dialog"
           aria-modal="true"
           aria-labelledby="expense-dialog-title"
@@ -910,6 +919,10 @@ export class TripDetailPage {
     this.editingActivity.set(null);
   }
 
+  closeActivityFromBackdrop(event: MouseEvent): void {
+    if (event.target === event.currentTarget) this.closeActivity();
+  }
+
   async saveActivity(): Promise<void> {
     if (this.activityForm.invalid) {
       this.activityForm.markAllAsTouched();
@@ -988,6 +1001,10 @@ export class TripDetailPage {
       this.showExpense.set(false);
       this.editingExpense.set(null);
     }
+  }
+
+  closeExpenseFromBackdrop(event: MouseEvent): void {
+    if (event.target === event.currentTarget) this.closeExpense();
   }
 
   async saveExpense(): Promise<void> {

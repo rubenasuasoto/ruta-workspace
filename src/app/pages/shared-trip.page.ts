@@ -1,9 +1,10 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { MapPoint } from '../core/models';
+import type { MapPoint } from '../core/models';
 import { TravelMapComponent } from '../features/map/travel-map.component';
-import { SharedTrip, SharingApi } from '../features/sharing/sharing-api.service';
+import type { SharedTrip} from '../features/sharing/sharing-api.service';
+import { SharingApi } from '../features/sharing/sharing-api.service';
 
 @Component({
   selector: 'app-shared-trip',

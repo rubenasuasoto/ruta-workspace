@@ -2,11 +2,12 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { Trip, TripStatus } from '../core/models';
+import type { Trip, TripStatus } from '../core/models';
 import { TripStore } from '../core/trip-store.service';
+import type {
+  MediaSelection} from '../features/media/media-picker.component';
 import {
-  MediaPickerComponent,
-  MediaSelection,
+  MediaPickerComponent
 } from '../features/media/media-picker.component';
 
 @Component({
@@ -71,8 +72,13 @@ import {
     </section>
 
     @if (showForm()) {
-      <div class="modal-backdrop" (click)="closeForm()">
-        <form class="modal" [formGroup]="form" (ngSubmit)="save()" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <div
+        class="modal-backdrop"
+        tabindex="-1"
+        (click)="closeFromBackdrop($event)"
+        (keydown.escape)="closeForm()"
+      >
+        <form class="modal" [formGroup]="form" (ngSubmit)="save()" role="dialog" aria-modal="true">
           <header>
             <div><p class="eyebrow">{{ editing() ? 'Actualizar viaje' : 'Una nueva historia' }}</p><h2>{{ editing() ? 'Editar viaje' : 'Crear un viaje' }}</h2></div>
             <button class="icon-button" type="button" (click)="closeForm()" aria-label="Cerrar">×</button>
@@ -164,6 +170,10 @@ export class TripsPage {
 
   closeForm(): void {
     if (!this.saving()) this.showForm.set(false);
+  }
+
+  closeFromBackdrop(event: MouseEvent): void {
+    if (event.target === event.currentTarget) this.closeForm();
   }
 
   async save(): Promise<void> {

@@ -1,8 +1,9 @@
-import {
+import type {
   AfterViewInit,
+  ElementRef} from '@angular/core';
+import {
   Component,
   DestroyRef,
-  ElementRef,
   ViewChild,
   effect,
   inject,
@@ -10,8 +11,9 @@ import {
   output,
 } from '@angular/core';
 import * as L from 'leaflet';
-import { MapLine, MapPoint } from '../../core/models';
+import type { MapLine, MapPoint } from '../../core/models';
 import { PublicConfigStore } from '../../core/public-config.store';
+import { googleMapsDirectionsUrl } from './map-directions';
 
 @Component({
   selector: 'app-travel-map',
@@ -59,6 +61,11 @@ import { PublicConfigStore } from '../../core/public-config.store';
     :host ::ng-deep .ruta-pin.place {
       background: var(--coral);
     }
+    :host ::ng-deep .ruta-pin.base {
+      background: #765328;
+      border-radius: 0.45rem 0.45rem 0.45rem 0;
+      box-shadow: 0 0 0 4px rgb(255 255 255 / 55%), 0 3px 12px #183a3c77;
+    }
     :host ::ng-deep .leaflet-tooltip {
       font-family: var(--font-body);
       font-size: 0.76rem;
@@ -70,6 +77,12 @@ export class TravelMapComponent implements AfterViewInit {
   readonly lines = input<MapLine[]>([]);
   readonly editable = input(false);
   readonly tilesEnabled = input(true);
+  readonly directionsEnabled = input(false);
+  readonly localOverlay = input<{
+    url: string;
+    bounds: [[number, number], [number, number]];
+    attribution?: string;
+  } | null>(null);
   readonly ariaLabel = input('Mapa del viaje');
   readonly pointSelected = output<string>();
   readonly locationChanged = output<{ latitude: number; longitude: number }>();
@@ -87,6 +100,8 @@ export class TravelMapComponent implements AfterViewInit {
       this.points();
       this.lines();
       this.editable();
+      this.directionsEnabled();
+      this.localOverlay();
       queueMicrotask(() => this.render());
     });
     this.destroyRef.onDestroy(() => {
@@ -106,6 +121,14 @@ export class TravelMapComponent implements AfterViewInit {
         attribution: tiles.attribution,
         maxZoom: tiles.maxZoom,
       }).addTo(this.map);
+    } else {
+      const overlay = this.localOverlay();
+      if (overlay) {
+        L.imageOverlay(overlay.url, overlay.bounds, {
+          alt: 'Mapa esquemático local de Valencia',
+        }).addTo(this.map);
+        if (overlay.attribution) this.map.attributionControl.addAttribution(overlay.attribution);
+      }
     }
     this.layer.addTo(this.map);
     this.map.on('click', (event: L.LeafletMouseEvent) => {
@@ -134,15 +157,29 @@ export class TravelMapComponent implements AfterViewInit {
         draggable: this.editable(),
         icon: L.divIcon({
           className: 'ruta-marker',
-          html: `<span class="ruta-pin ${point.marker === 'place' ? 'place' : ''}"><span>${point.marker === 'place' ? '◆' : '●'}</span></span>`,
+          html: `<span class="ruta-pin ${point.marker}"><span>${
+            point.marker === 'place' ? '◆' : point.marker === 'base' ? 'H' : '●'
+          }</span></span>`,
           iconSize: [32, 32],
           iconAnchor: [16, 31],
         }),
       });
       const tooltip = document.createElement('span');
-      tooltip.textContent = point.subtitle ? `${point.label} · ${point.subtitle}` : point.label;
+      const pointDescription = point.subtitle ? `${point.label} · ${point.subtitle}` : point.label;
+      tooltip.textContent = this.directionsEnabled()
+        ? `${pointDescription} · Abrir indicaciones en Google Maps`
+        : pointDescription;
       marker.bindTooltip(tooltip);
-      marker.on('click', () => this.pointSelected.emit(point.id));
+      marker.on('click', () => {
+        this.pointSelected.emit(point.id);
+        if (this.directionsEnabled()) {
+          window.open(
+            googleMapsDirectionsUrl(point.latitude, point.longitude),
+            '_blank',
+            'noopener,noreferrer',
+          );
+        }
+      });
       marker.on('dragend', () => {
         const position = marker.getLatLng();
         this.locationChanged.emit({

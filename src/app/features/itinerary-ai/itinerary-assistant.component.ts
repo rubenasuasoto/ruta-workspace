@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, input, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivityKind } from '../../core/models';
+import type { ActivityKind } from '../../core/models';
 import { TripStore } from '../../core/trip-store.service';
 import { ItineraryAiService } from './itinerary-ai.service';
 

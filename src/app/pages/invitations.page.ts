@@ -6,7 +6,7 @@ import { invitationsControllerCreate } from '../api/fn/invitations/invitations-c
 import { invitationsControllerList } from '../api/fn/invitations/invitations-controller-list';
 import { invitationsControllerRenew } from '../api/fn/invitations/invitations-controller-renew';
 import { invitationsControllerRevoke } from '../api/fn/invitations/invitations-controller-revoke';
-import { InvitationResponseDto } from '../api/models/invitation-response-dto';
+import type { InvitationResponseDto } from '../api/models/invitation-response-dto';
 import { FeedbackService } from '../core/feedback.service';
 
 @Component({

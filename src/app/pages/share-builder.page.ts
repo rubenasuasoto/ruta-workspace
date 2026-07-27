@@ -4,7 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TripStore } from '../core/trip-store.service';
 import { FeedbackService } from '../core/feedback.service';
-import { SharingApi, TripShare } from '../features/sharing/sharing-api.service';
+import type { TripShare } from '../features/sharing/sharing-api.service';
+import { SharingApi } from '../features/sharing/sharing-api.service';
 
 @Component({
   selector: 'app-share-builder',

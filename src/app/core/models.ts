@@ -70,12 +70,12 @@ export interface MapPoint {
   latitude: number;
   longitude: number;
   kind: ActivityKind | 'lugar';
-  marker: 'activity' | 'place';
+  marker: 'activity' | 'place' | 'base';
   dayId?: string;
   position?: number;
 }
 export interface MapLine {
   id: string;
-  coordinates: Array<[number, number]>;
+  coordinates: [number, number][];
   mode: TravelMode | 'fallback';
 }

@@ -1,10 +1,11 @@
-import {
+import type {
   AfterViewInit,
-  Component,
   ElementRef,
+  OnDestroy} from '@angular/core';
+import {
+  Component,
   EventEmitter,
   Input,
-  OnDestroy,
   Output,
   ViewChild,
   inject,

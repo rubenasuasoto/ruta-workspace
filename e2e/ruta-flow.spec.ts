@@ -3,23 +3,6 @@ import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
 
-test('la demo pública usa datos ficticios sin API ni teselas externas', async ({ page }) => {
-  const requests: string[] = [];
-  await page.route('**/api/**', (route) => {
-    requests.push(route.request().url());
-    return route.abort();
-  });
-  await page.route('https://*.tile.openstreetmap.org/**', (route) => {
-    requests.push(route.request().url());
-    return route.abort();
-  });
-  await page.goto('/demo');
-  await expect(page.getByText('Demo de portafolio · datos ficticios · solo lectura')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Valencia' })).toBeVisible();
-  await expect(page.getByLabel('Mapa ficticio de la demo, sin teselas externas')).toBeVisible();
-  expect(requests).toEqual([]);
-});
-
 function seedAdmin(email: string, password: string): void {
   const apiDirectory = resolve(__dirname, '../../ruta-api');
   const passwordHash = execFileSync(

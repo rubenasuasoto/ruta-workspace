@@ -13,7 +13,7 @@ export interface TripShare {
   expiresAt: string;
   revokedAt: string | null;
   active: boolean;
-  recipients: Array<{ id: string; email: string; name: string }>;
+  recipients: { id: string; email: string; name: string }[];
 }
 
 export interface SharedTrip {
@@ -26,10 +26,10 @@ export interface SharedTrip {
     coverImage: string | null;
   } | null;
   dates: { startDate: string; endDate: string } | null;
-  days: Array<{
+  days: {
     id: string;
     date: string;
-    activities: Array<{
+    activities: {
       id: string;
       title: string;
       time: string;
@@ -39,9 +39,9 @@ export interface SharedTrip {
       address?: string | null;
       latitude?: number | null;
       longitude?: number | null;
-    }>;
-  }>;
-  places: Array<{
+    }[];
+  }[];
+  places: {
     id: string;
     name: string;
     city: string;
@@ -49,7 +49,7 @@ export interface SharedTrip {
     category: string;
     image: string | null;
     address?: string | null;
-  }>;
+  }[];
   mapEnabled: boolean;
 }
 

@@ -17,7 +17,7 @@ import { tripsControllerToggleActivity } from '../api/fn/trips/trips-controller-
 import { tripsControllerUpdate } from '../api/fn/trips/trips-controller-update';
 import { tripsControllerUpdateActivity } from '../api/fn/trips/trips-controller-update-activity';
 import { tripsControllerUpdateExpense } from '../api/fn/trips/trips-controller-update-expense';
-import { Activity, Expense, ItineraryDay, SavedPlace, Trip } from './models';
+import type { Activity, Expense, ItineraryDay, SavedPlace, Trip } from './models';
 
 const STORE_KEY = 'ruta.travel-journal.v1';
 
@@ -331,7 +331,13 @@ export class TripStore {
 
   async updateExpense(expense: Expense): Promise<void> {
     await this.mutate(async () => {
-      const { id, tripId: _tripId, ...body } = expense;
+      const { id } = expense;
+      const body = {
+        title: expense.title,
+        category: expense.category,
+        amount: expense.amount,
+        date: expense.date,
+      };
       const updated = await this.api.invoke(tripsControllerUpdateExpense, { expenseId: id, body });
       this.expenses.update((items) =>
         items.map((item) => (item.id === id ? (updated as Expense) : item)),

@@ -4,8 +4,8 @@ import { Api } from '../../api/api';
 import { mediaControllerImportOpenverse } from '../../api/fn/media/media-controller-import-openverse';
 import { mediaControllerSearch } from '../../api/fn/media/media-controller-search';
 import { mediaControllerUpload } from '../../api/fn/media/media-controller-upload';
-import { MediaAssetResponseDto } from '../../api/models/media-asset-response-dto';
-import { MediaSearchResultDto } from '../../api/models/media-search-result-dto';
+import type { MediaAssetResponseDto } from '../../api/models/media-asset-response-dto';
+import type { MediaSearchResultDto } from '../../api/models/media-search-result-dto';
 
 export interface MediaSelection {
   assetId: string | null;

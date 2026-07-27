@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MapPoint } from '../../core/models';
+import type { MapPoint } from '../../core/models';
 import { GeocodingService } from './geocoding.service';
 import { TravelMapComponent } from './travel-map.component';
 
@@ -75,13 +75,13 @@ export class LocationPickerComponent {
   readonly valueChange = output<LocationSelection | null>();
   readonly geo = inject(GeocodingService);
   readonly results = signal<
-    Array<{
+    {
       id: string;
       label: string;
       category: string;
       latitude: number;
       longitude: number;
-    }>
+    }[]
   >([]);
   readonly selection = signal<LocationSelection | null>(null);
   readonly mapPoints = signal<MapPoint[]>([]);
