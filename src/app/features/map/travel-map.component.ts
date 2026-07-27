@@ -69,6 +69,7 @@ export class TravelMapComponent implements AfterViewInit {
   readonly points = input<MapPoint[]>([]);
   readonly lines = input<MapLine[]>([]);
   readonly editable = input(false);
+  readonly tilesEnabled = input(true);
   readonly ariaLabel = input('Mapa del viaje');
   readonly pointSelected = output<string>();
   readonly locationChanged = output<{ latitude: number; longitude: number }>();
@@ -99,11 +100,13 @@ export class TravelMapComponent implements AfterViewInit {
       zoomControl: true,
       scrollWheelZoom: false,
     }).setView([40.1, -3.7], 5);
-    const tiles = this.publicConfig.mapTiles();
-    L.tileLayer(tiles.url, {
-      attribution: tiles.attribution,
-      maxZoom: tiles.maxZoom,
-    }).addTo(this.map);
+    if (this.tilesEnabled()) {
+      const tiles = this.publicConfig.mapTiles();
+      L.tileLayer(tiles.url, {
+        attribution: tiles.attribution,
+        maxZoom: tiles.maxZoom,
+      }).addTo(this.map);
+    }
     this.layer.addTo(this.map);
     this.map.on('click', (event: L.LeafletMouseEvent) => {
       if (this.editable())

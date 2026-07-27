@@ -14,6 +14,9 @@ export interface MapTilesConfig {
 export class PublicConfigStore {
   private readonly api = inject(Api);
   readonly googleClientId = signal('');
+  readonly accessMode = signal<'invite_only'>('invite_only');
+  readonly registrationEnabled = signal(false);
+  readonly portfolioDemoEnabled = signal(true);
   readonly turnstileEnabled = signal(false);
   readonly turnstileSiteKey = signal('');
   readonly routingEnabled = signal(false);
@@ -27,6 +30,9 @@ export class PublicConfigStore {
   async load(): Promise<void> {
     try {
       const config = await this.api.invoke(publicConfigControllerGetPublicConfig);
+      this.accessMode.set(config.accessMode);
+      this.registrationEnabled.set(config.registrationEnabled);
+      this.portfolioDemoEnabled.set(config.portfolioDemoEnabled);
       this.googleClientId.set(config.googleClientId);
       this.turnstileEnabled.set(config.turnstileEnabled);
       this.turnstileSiteKey.set(config.turnstileSiteKey);

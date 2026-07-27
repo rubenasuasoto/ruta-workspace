@@ -3,6 +3,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthStore } from '../auth/auth.store';
+import { PASSWORD_REQUIREMENTS, PASSWORD_VALIDATORS } from '../auth/password-policy';
 import { FeedbackService } from '../core/feedback.service';
 import { TripStore } from '../core/trip-store.service';
 import { PublicConfigStore } from '../core/public-config.store';
@@ -101,6 +102,7 @@ import { GoogleSignInComponent } from '../features/account/google-sign-in.compon
                 autocomplete="new-password"
                 formControlName="password"
               />
+              <small class="muted">{{ passwordRequirements }}</small>
             </div>
             <div class="field">
               <label for="account-password-repeat">Repetir contraseña</label>
@@ -333,9 +335,10 @@ export class AccountPage implements OnInit {
     email: ['', [Validators.required, Validators.email]],
   });
   readonly passwordForm = this.fb.nonNullable.group({
-    password: ['', [Validators.required, Validators.minLength(10)]],
+    password: ['', PASSWORD_VALIDATORS],
     confirmation: ['', Validators.required],
   });
+  readonly passwordRequirements = PASSWORD_REQUIREMENTS;
 
   async ngOnInit(): Promise<void> {
     const user = this.auth.user();

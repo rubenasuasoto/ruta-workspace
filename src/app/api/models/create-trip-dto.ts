@@ -4,7 +4,8 @@
 export interface CreateTripDto {
   budget: number;
   country: string;
-  coverImage: string;
+  coverAssetId?: string | null;
+  /** @deprecated */coverImage?: string;
   description: string;
   destination: string;
   endDate: string;

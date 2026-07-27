@@ -23,7 +23,10 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const withAuth = (token: string | null) =>
     request.clone({
       withCredentials: true,
-      setHeaders: token ? { Authorization: `Bearer ${token}` } : {},
+      setHeaders: {
+        'X-Ruta-Client': 'web',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
     });
 
   return next(withAuth(auth.accessToken())).pipe(

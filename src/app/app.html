@@ -23,13 +23,19 @@
       <a routerLink="/viajes" routerLinkActive="active" (click)="closeMenu()">Mis viajes</a>
       <a routerLink="/lugares" routerLinkActive="active" (click)="closeMenu()">Lugares</a>
       <a routerLink="/cuenta" routerLinkActive="active" (click)="closeMenu()"> Mi cuenta </a>
+      @if (auth.user()?.systemRole === 'admin') {
+        <a routerLink="/administracion/invitaciones" routerLinkActive="active" (click)="closeMenu()"
+          >Invitaciones</a
+        >
+      }
       <span class="user-name">{{ auth.user()?.name }}</span>
       <button class="logout" type="button" (click)="logout()">Salir</button>
     </nav>
   } @else if (auth.initialized()) {
     <nav class="guest-nav" aria-label="Acceso">
+      <a routerLink="/demo" routerLinkActive="active">Ver demo</a>
       <a routerLink="/acceso" routerLinkActive="active">Acceder</a>
-      <a class="register-link" routerLink="/registro">Crear cuenta</a>
+      <span class="private-access">Acceso por invitación</span>
     </nav>
   }
 </header>
@@ -39,4 +45,18 @@
   </div>
 }
 <main><router-outlet /></main>
+<footer class="site-footer">
+  <div>
+    <a class="brand" routerLink="/"><span>R</span> ruta</a>
+    <p>Cuaderno privado para planificar viajes con intención.</p>
+  </div>
+  <nav aria-label="Información legal">
+    <a routerLink="/legal/aviso">Aviso legal</a>
+    <a routerLink="/legal/privacidad">Privacidad</a>
+    <a routerLink="/legal/cookies">Cookies</a>
+    <a routerLink="/legal/condiciones">Normas de uso</a>
+    <a routerLink="/legal/imagenes">Imágenes</a>
+    <a routerLink="/legal/retirada">Contacto y retirada</a>
+  </nav>
+</footer>
 <app-feedback />

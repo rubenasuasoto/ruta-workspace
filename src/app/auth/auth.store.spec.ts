@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Api } from '../api/api';
 import { AuthStore } from './auth.store';
 import { authControllerRegister } from '../api/fn/auth/auth-controller-register';
-import { authControllerVerifyEmail } from '../api/fn/auth/auth-controller-verify-email';
+import { invitationsControllerInspect } from '../api/fn/invitations/invitations-controller-inspect';
 
 describe('AuthStore', () => {
   it('shares one refresh request between concurrent callers', async () => {
@@ -29,16 +29,16 @@ describe('AuthStore', () => {
     expect(auth.authenticated()).toBe(true);
   });
 
-  it('keeps registration pending until the email token is verified', async () => {
+  it('inspects and consumes an invitation before authenticating the new account', async () => {
     const invoke = vi.fn().mockImplementation((operation: unknown) => {
+      if (operation === invitationsControllerInspect)
+        return Promise.resolve({
+          email: 'ruta@example.com',
+          expiresAt: '2026-07-31T12:00:00.000Z',
+        });
       if (operation === authControllerRegister)
         return Promise.resolve({
-          status: 'verification_required',
-          message: 'Revisa tu correo',
-        });
-      if (operation === authControllerVerifyEmail)
-        return Promise.resolve({
-          accessToken: 'verified-access',
+          accessToken: 'invited-access',
           user: {
             id: 'user-1',
             email: 'ruta@example.com',
@@ -54,12 +54,10 @@ describe('AuthStore', () => {
     });
     const auth = TestBed.inject(AuthStore);
 
-    await expect(
-      auth.register('Ruta', 'ruta@example.com', 'secure-password'),
-    ).resolves.toMatchObject({ status: 'verification_required' });
-    expect(auth.authenticated()).toBe(false);
-
-    await auth.verifyEmail('email-token');
+    await expect(auth.inspectInvitation('invite-token')).resolves.toMatchObject({
+      email: 'ruta@example.com',
+    });
+    await auth.register('Ruta', 'Secure!1', 'invite-token');
     expect(auth.authenticated()).toBe(true);
     expect(auth.user()?.emailVerified).toBe(true);
   });

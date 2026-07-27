@@ -7,7 +7,9 @@ export interface SavedPlaceResponseDto {
   city: string;
   country: string;
   id: string;
-  image: string;
+  image?: string | null;
+  imageAssetId?: string | null;
+  imageVerified: boolean;
   latitude?: number | null;
   longitude?: number | null;
   name: string;

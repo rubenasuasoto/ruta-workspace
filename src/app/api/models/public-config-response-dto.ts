@@ -3,9 +3,12 @@
 
 import { PublicMapTilesDto } from '../models/public-map-tiles-dto';
 export interface PublicConfigResponseDto {
+  accessMode: 'invite_only';
   geocodingEnabled: boolean;
   googleClientId: string;
   mapTiles: PublicMapTilesDto;
+  portfolioDemoEnabled: boolean;
+  registrationEnabled: boolean;
   routingEnabled: boolean;
   turnstileEnabled: boolean;
   turnstileSiteKey: string;

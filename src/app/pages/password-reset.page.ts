@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthStore } from '../auth/auth.store';
+import { PASSWORD_REQUIREMENTS, PASSWORD_VALIDATORS } from '../auth/password-policy';
 
 @Component({
   selector: 'app-password-reset',
@@ -25,6 +26,7 @@ import { AuthStore } from '../auth/auth.store';
               autocomplete="new-password"
               formControlName="password"
             />
+            <small class="hint">{{ passwordRequirements }}</small>
           </div>
           <div class="field">
             <label for="repeat-password">Repite la contraseña</label>
@@ -70,6 +72,11 @@ import { AuthStore } from '../auth/auth.store';
     .field {
       margin-bottom: 1rem;
     }
+    .hint {
+      color: var(--muted);
+      display: block;
+      margin-top: 0.35rem;
+    }
     button {
       width: 100%;
     }
@@ -88,8 +95,9 @@ export class PasswordResetPage {
   private readonly fb = inject(FormBuilder);
   readonly completed = signal(false);
   readonly mismatch = signal(false);
+  readonly passwordRequirements = PASSWORD_REQUIREMENTS;
   readonly form = this.fb.nonNullable.group({
-    password: ['', [Validators.required, Validators.minLength(10)]],
+    password: ['', PASSWORD_VALIDATORS],
     confirmation: ['', [Validators.required]],
   });
 

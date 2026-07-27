@@ -4,7 +4,9 @@
 export interface TripResponseDto {
   budget: number;
   country: string;
-  coverImage: string;
+  coverAssetId?: string | null;
+  coverImage?: string | null;
+  coverVerified: boolean;
   description: string;
   destination: string;
   endDate: string;

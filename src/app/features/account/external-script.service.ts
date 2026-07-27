@@ -1,12 +1,23 @@
 import { DOCUMENT } from '@angular/common';
 import { Injectable, inject } from '@angular/core';
 
+const ALLOWED_EXTERNAL_SCRIPTS = new Set([
+  'https://accounts.google.com/gsi/client',
+  'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit',
+]);
+
+export function isAllowedExternalScript(src: string): boolean {
+  return ALLOWED_EXTERNAL_SCRIPTS.has(src);
+}
+
 @Injectable({ providedIn: 'root' })
 export class ExternalScriptService {
   private readonly document = inject(DOCUMENT);
   private readonly loads = new Map<string, Promise<void>>();
 
   load(src: string): Promise<void> {
+    if (!isAllowedExternalScript(src))
+      return Promise.reject(new Error('Script externo no permitido'));
     const existing = this.loads.get(src);
     if (existing) return existing;
     const load = new Promise<void>((resolve, reject) => {

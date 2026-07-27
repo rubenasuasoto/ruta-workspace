@@ -7,4 +7,9 @@ export interface GoogleLoginDto {
    * Credential emitido por Google Identity Services
    */
   credential: string;
+
+  /**
+   * Necesaria únicamente al crear una cuenta nueva
+   */
+  invitationToken?: string;
 }

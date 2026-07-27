@@ -19,7 +19,9 @@ export interface Trip {
   endDate: string;
   budget: number;
   status: TripStatus;
-  coverImage: string;
+  coverImage?: string | null;
+  coverAssetId?: string | null;
+  coverVerified?: boolean;
   description: string;
 }
 export interface Activity extends LocationFields {
@@ -55,7 +57,9 @@ export interface SavedPlace extends LocationFields {
   city: string;
   country: string;
   category: ActivityKind;
-  image: string;
+  image?: string | null;
+  imageAssetId?: string | null;
+  imageVerified?: boolean;
   visited: boolean;
   note: string;
 }

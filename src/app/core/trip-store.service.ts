@@ -88,7 +88,30 @@ export class TripStore {
 
   async createTrip(input: Omit<Trip, 'id'>): Promise<Trip> {
     return this.mutate(async () => {
-      const trip = await this.api.invoke(tripsControllerCreate, { body: input });
+      const {
+        destination,
+        country,
+        startDate,
+        endDate,
+        budget,
+        status,
+        coverImage,
+        coverAssetId,
+        description,
+      } = input;
+      const trip = await this.api.invoke(tripsControllerCreate, {
+        body: {
+          destination,
+          country,
+          startDate,
+          endDate,
+          budget,
+          status,
+          coverImage: coverImage || undefined,
+          coverAssetId,
+          description,
+        },
+      });
       this.trips.update((items) => [trip as Trip, ...items]);
       await this.load();
       return trip as Trip;
@@ -97,8 +120,32 @@ export class TripStore {
 
   async updateTrip(trip: Trip): Promise<void> {
     await this.mutate(async () => {
-      const { id, ...body } = trip;
-      const updated = await this.api.invoke(tripsControllerUpdate, { tripId: id, body });
+      const {
+        id,
+        destination,
+        country,
+        startDate,
+        endDate,
+        budget,
+        status,
+        coverImage,
+        coverAssetId,
+        description,
+      } = trip;
+      const updated = await this.api.invoke(tripsControllerUpdate, {
+        tripId: id,
+        body: {
+          destination,
+          country,
+          startDate,
+          endDate,
+          budget,
+          status,
+          coverImage: coverImage || undefined,
+          coverAssetId,
+          description,
+        },
+      });
       this.trips.update((items) =>
         items.map((item) => (item.id === trip.id ? (updated as Trip) : item)),
       );
@@ -294,15 +341,70 @@ export class TripStore {
 
   async addPlace(input: Omit<SavedPlace, 'id'>): Promise<void> {
     await this.mutate(async () => {
-      const place = await this.api.invoke(placesControllerCreate, { body: input });
+      const {
+        name,
+        city,
+        country,
+        category,
+        image,
+        imageAssetId,
+        visited,
+        note,
+        address,
+        latitude,
+        longitude,
+      } = input;
+      const place = await this.api.invoke(placesControllerCreate, {
+        body: {
+          name,
+          city,
+          country,
+          category,
+          image: image || undefined,
+          imageAssetId,
+          visited,
+          note,
+          address,
+          latitude,
+          longitude,
+        },
+      });
       this.places.update((items) => [place as SavedPlace, ...items]);
     });
   }
 
   async updatePlace(place: SavedPlace): Promise<void> {
     await this.mutate(async () => {
-      const { id, ...body } = place;
-      const updated = await this.api.invoke(placesControllerUpdate, { placeId: id, body });
+      const {
+        id,
+        name,
+        city,
+        country,
+        category,
+        image,
+        imageAssetId,
+        visited,
+        note,
+        address,
+        latitude,
+        longitude,
+      } = place;
+      const updated = await this.api.invoke(placesControllerUpdate, {
+        placeId: id,
+        body: {
+          name,
+          city,
+          country,
+          category,
+          image: image || undefined,
+          imageAssetId,
+          visited,
+          note,
+          address,
+          latitude,
+          longitude,
+        },
+      });
       this.places.update((items) =>
         items.map((item) => (item.id === id ? (updated as SavedPlace) : item)),
       );

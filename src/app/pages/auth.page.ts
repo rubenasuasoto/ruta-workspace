@@ -2,141 +2,121 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthStore } from '../auth/auth.store';
+import {
+  PASSWORD_LOGIN_REQUIRED,
+  PASSWORD_REQUIREMENTS,
+  PASSWORD_VALIDATORS,
+} from '../auth/password-policy';
 import { PublicConfigStore } from '../core/public-config.store';
 import { TripStore } from '../core/trip-store.service';
 import { GoogleSignInComponent } from '../features/account/google-sign-in.component';
-import { TurnstileComponent } from '../features/account/turnstile.component';
 
 @Component({
   selector: 'app-auth',
-  imports: [ReactiveFormsModule, RouterLink, GoogleSignInComponent, TurnstileComponent],
+  imports: [ReactiveFormsModule, RouterLink, GoogleSignInComponent],
   template: `
     <section class="auth-shell">
       <div class="auth-story">
         <p class="eyebrow">Tu atlas personal</p>
         <h1>Todo viaje empieza con un lugar donde imaginarlo.</h1>
-        <p>Organiza rutas, gastos y lugares pendientes en un cuaderno privado que viaja contigo.</p>
-        <span>ruta · planifica con intención</span>
+        <p>
+          Un cuaderno privado para organizar rutas, gastos y lugares con las personas que tú eliges.
+        </p>
+        <span>ruta · acceso privado por invitación</span>
       </div>
 
       <div class="auth-panel">
-        @if (registrationPending()) {
-          <section class="pending-card" role="status">
-            <p class="eyebrow">Un paso más</p>
-            <h2>Revisa tu correo</h2>
-            <p>
-              Hemos enviado un enlace a <strong>{{ pendingEmail() }}</strong
-              >. Debes confirmarlo antes de acceder a tus viajes.
-            </p>
-            <a class="button coral" routerLink="/acceso">Volver al acceso</a>
-            <a class="resend-link" routerLink="/reenviar-verificacion">
-              Reenviar la verificación
-            </a>
-          </section>
-        } @else {
-          <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-            <p class="eyebrow">{{ isRegister() ? 'Una cuenta nueva' : 'Bienvenido de vuelta' }}</p>
-            <h2>{{ isRegister() ? 'Crea tu espacio' : 'Continúa el camino' }}</h2>
-            <p class="lead">
-              {{
-                isRegister()
-                  ? 'Tus viajes serán privados y estarán disponibles al volver.'
-                  : 'Accede a tus viajes, ideas y presupuestos.'
-              }}
-            </p>
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <p class="eyebrow">{{ isRegister() ? 'Invitación privada' : 'Bienvenido de vuelta' }}</p>
+          <h2>{{ isRegister() ? 'Crea tu espacio' : 'Continúa el camino' }}</h2>
+          <p class="lead">
+            {{
+              isRegister()
+                ? 'Esta invitación es personal, caduca y solo puede utilizarse una vez.'
+                : 'Accede a tus viajes, ideas y presupuestos.'
+            }}
+          </p>
 
-            @if (isRegister()) {
+          @if (isRegister()) {
+            @if (invitationLoading()) {
+              <p role="status">Comprobando invitación…</p>
+            } @else if (invitationError()) {
+              <div class="form-error" role="alert">{{ invitationError() }}</div>
+            } @else {
+              <div class="field">
+                <label for="invited-email">Correo invitado</label>
+                <input id="invited-email" [value]="invitationEmail()" readonly />
+              </div>
               <div class="field">
                 <label for="name">Nombre</label>
-                <input
-                  id="name"
-                  autocomplete="name"
-                  formControlName="name"
-                  placeholder="Cómo quieres que te llamemos"
-                />
+                <input id="name" autocomplete="name" formControlName="name" />
                 @if (form.controls.name.touched && form.controls.name.invalid) {
                   <span class="error">Indica tu nombre.</span>
                 }
               </div>
             }
+          } @else {
             <div class="field">
               <label for="email">Correo electrónico</label>
-              <input
-                id="email"
-                type="email"
-                autocomplete="email"
-                formControlName="email"
-                placeholder="tu@correo.com"
-              />
+              <input id="email" type="email" autocomplete="email" formControlName="email" />
               @if (form.controls.email.touched && form.controls.email.invalid) {
                 <span class="error">Introduce un correo válido.</span>
               }
             </div>
-            @if (!isRegister()) {
-              <a class="forgot" routerLink="/recuperar-contrasena">
-                ¿Has olvidado tu contraseña?
-              </a>
-            }
+            <a class="forgot" routerLink="/recuperar-contrasena">¿Has olvidado tu contraseña?</a>
+          }
 
-            @if (isRegister() && publicConfig.turnstileEnabled()) {
-              <app-turnstile
-                [siteKey]="publicConfig.turnstileSiteKey()"
-                (tokenChange)="turnstileToken.set($event)"
-                (loadError)="widgetError.set(true)"
-              />
+          <div class="field">
+            <label for="password">Contraseña</label>
+            <input
+              id="password"
+              type="password"
+              [attr.autocomplete]="isRegister() ? 'new-password' : 'current-password'"
+              formControlName="password"
+            />
+            @if (form.controls.password.touched && form.controls.password.invalid) {
+              <span class="error">
+                {{ isRegister() ? passwordRequirements : loginPasswordRequired }}
+              </span>
             }
-            @if (widgetError()) {
-              <p class="error" role="alert">
-                No se pudo cargar la comprobación de seguridad. Recarga la página.
-              </p>
-            }
-            <div class="field">
-              <label for="password">Contraseña</label>
-              <input
-                id="password"
-                type="password"
-                [attr.autocomplete]="isRegister() ? 'new-password' : 'current-password'"
-                formControlName="password"
-              />
-              @if (form.controls.password.touched && form.controls.password.invalid) {
-                <span class="error">Debe tener al menos 10 caracteres.</span>
-              }
-            </div>
+          </div>
 
-            @if (auth.error()) {
-              <div class="form-error" role="alert">{{ auth.error() }}</div>
-            }
-            <button class="button coral submit" type="submit" [disabled]="auth.loading()">
-              {{ auth.loading() ? 'Conectando…' : isRegister() ? 'Crear cuenta' : 'Acceder' }}
-            </button>
+          @if (auth.error()) {
+            <div class="form-error" role="alert">{{ auth.error() }}</div>
+          }
+          <button
+            class="button coral submit"
+            type="submit"
+            [disabled]="
+              auth.loading() || (isRegister() && (invitationLoading() || !!invitationError()))
+            "
+          >
+            {{ auth.loading() ? 'Conectando…' : isRegister() ? 'Aceptar invitación' : 'Acceder' }}
+          </button>
 
+          @if (googleEnabled()) {
             <div class="divider"><span>o</span></div>
-            @if (googleEnabled()) {
-              <app-google-sign-in
-                [clientId]="publicConfig.googleClientId()"
-                (credential)="loginWithGoogle($event)"
-                (loadError)="widgetError.set(true)"
-              />
-            } @else {
-              <button
-                class="google"
-                type="button"
-                disabled
-                title="Configura GOOGLE_CLIENT_ID para habilitarlo"
-              >
-                Acceder con Google
-                <small>sin configurar</small>
-              </button>
-            }
+            <app-google-sign-in
+              [clientId]="publicConfig.googleClientId()"
+              (credential)="loginWithGoogle($event)"
+              (loadError)="googleError.set(true)"
+            />
+          }
+          @if (googleError()) {
+            <p class="error" role="alert">No se pudo cargar el acceso de Google.</p>
+          }
 
-            <p class="switch">
-              {{ isRegister() ? '¿Ya tienes cuenta?' : '¿Es tu primera ruta?' }}
-              <a [routerLink]="isRegister() ? '/acceso' : '/registro'">{{
-                isRegister() ? 'Accede' : 'Crea una cuenta'
-              }}</a>
-            </p>
-          </form>
-        }
+          <p class="switch">
+            @if (isRegister()) {
+              ¿Ya tienes cuenta? <a routerLink="/acceso">Accede</a>
+            } @else {
+              Ruta es privada. Las cuentas nuevas necesitan una invitación personal.
+            }
+          </p>
+          <p class="demo-link">
+            <a routerLink="/demo">Explorar la demo pública con datos ficticios</a>
+          </p>
+        </form>
       </div>
     </section>
   `,
@@ -149,9 +129,8 @@ import { TurnstileComponent } from '../features/account/turnstile.component';
     .auth-story {
       background:
         linear-gradient(135deg, rgba(24, 58, 60, 0.9), rgba(24, 58, 60, 0.62)),
-        url('https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1400&q=85')
-          center/cover;
-      color: white;
+        url('/assets/editorial/ruta-auth-hero.png') center/cover;
+      color: #fff;
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
@@ -169,7 +148,7 @@ import { TurnstileComponent } from '../features/account/turnstile.component';
       max-width: 520px;
     }
     .auth-story > span {
-      border-top: 1px solid rgba(255, 255, 255, 0.3);
+      border-top: 1px solid #ffffff4d;
       font-size: 0.75rem;
       letter-spacing: 0.12em;
       margin-top: 2rem;
@@ -203,19 +182,6 @@ import { TurnstileComponent } from '../features/account/turnstile.component';
       display: inline-block;
       font-size: 0.82rem;
       margin: -0.35rem 0 0.8rem;
-    }
-    .pending-card {
-      max-width: 460px;
-    }
-    .pending-card p {
-      color: var(--muted);
-      line-height: 1.6;
-      margin-bottom: 1.5rem;
-    }
-    .resend-link {
-      color: var(--deep);
-      display: block;
-      margin-top: 1rem;
     }
     .submit,
     .google {
@@ -252,23 +218,15 @@ import { TurnstileComponent } from '../features/account/turnstile.component';
       height: 1px;
       flex: 1;
     }
-    .google {
-      background: var(--paper);
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      color: var(--muted);
-    }
-    .google small {
-      display: block;
-      font-size: 0.65rem;
-    }
-    .switch {
+    .switch,
+    .demo-link {
       color: var(--muted);
       font-size: 0.84rem;
       margin: 1.4rem 0 0;
       text-align: center;
     }
-    .switch a {
+    .switch a,
+    .demo-link a {
       color: var(--coral);
       font-weight: 700;
     }
@@ -299,42 +257,43 @@ export class AuthPage {
 
   readonly isRegister = computed(() => this.route.snapshot.data['mode'] === 'register');
   readonly googleEnabled = computed(() => this.publicConfig.googleClientId().length > 0);
-  readonly registrationPending = signal(false);
-  readonly pendingEmail = signal('');
-  readonly turnstileToken = signal('');
-  readonly widgetError = signal(false);
+  readonly invitationToken = this.route.snapshot.queryParamMap.get('invite')?.trim() ?? '';
+  readonly invitationEmail = signal('');
+  readonly invitationLoading = signal(false);
+  readonly invitationError = signal('');
+  readonly googleError = signal(false);
+  readonly passwordRequirements = PASSWORD_REQUIREMENTS;
+  readonly loginPasswordRequired = PASSWORD_LOGIN_REQUIRED;
   readonly form = this.fb.nonNullable.group({
     name: [''],
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(10)]],
+    email: [''],
+    password: ['', [Validators.required]],
   });
 
+  constructor() {
+    if (this.isRegister()) void this.inspectInvitation();
+  }
+
   async submit(): Promise<void> {
-    if (this.isRegister()) this.form.controls.name.addValidators(Validators.required);
-    else this.form.controls.name.clearValidators();
-    this.form.controls.name.updateValueAndValidity();
-    if (this.form.invalid) {
+    this.form.controls.name.setValidators(this.isRegister() ? [Validators.required] : []);
+    this.form.controls.email.setValidators(
+      this.isRegister() ? [] : [Validators.required, Validators.email],
+    );
+    this.form.controls.password.setValidators(
+      this.isRegister() ? PASSWORD_VALIDATORS : [Validators.required],
+    );
+    this.form.updateValueAndValidity();
+    if (
+      this.form.invalid ||
+      (this.isRegister() && (!this.invitationToken || !!this.invitationError()))
+    ) {
       this.form.markAllAsTouched();
       return;
     }
     const { name, email, password } = this.form.getRawValue();
     try {
-      if (this.isRegister()) {
-        if (this.publicConfig.turnstileEnabled() && !this.turnstileToken()) {
-          this.widgetError.set(true);
-          return;
-        }
-        await this.auth.register(
-          name.trim(),
-          email.trim(),
-          password,
-          this.turnstileToken() || undefined,
-        );
-        this.pendingEmail.set(email.trim());
-        this.registrationPending.set(true);
-        return;
-      }
-      await this.auth.login(email.trim(), password);
+      if (this.isRegister()) await this.auth.register(name.trim(), password, this.invitationToken);
+      else await this.auth.login(email.trim(), password);
       await this.finishAuthentication();
     } catch {
       // AuthStore exposes the safe user-facing error.
@@ -343,16 +302,46 @@ export class AuthPage {
 
   async loginWithGoogle(credential: string): Promise<void> {
     try {
-      await this.auth.loginWithGoogle(credential);
+      await this.auth.loginWithGoogle(
+        credential,
+        this.isRegister() ? this.invitationToken : undefined,
+      );
       await this.finishAuthentication();
     } catch {
       // AuthStore exposes the safe user-facing error.
     }
   }
 
+  private async inspectInvitation(): Promise<void> {
+    if (!this.invitationToken) {
+      this.invitationError.set('Necesitas una invitación personal para crear una cuenta.');
+      return;
+    }
+    this.invitationLoading.set(true);
+    try {
+      const invitation = await this.auth.inspectInvitation(this.invitationToken);
+      this.invitationEmail.set(invitation.email);
+    } catch {
+      this.invitationError.set('La invitación no es válida, ha caducado o ya fue utilizada.');
+    } finally {
+      this.invitationLoading.set(false);
+    }
+  }
+
   private async finishAuthentication(): Promise<void> {
     await this.trips.load();
     const requested = this.route.snapshot.queryParamMap.get('returnUrl');
-    await this.router.navigateByUrl(requested?.startsWith('/') ? requested : '/');
+    await this.router.navigateByUrl(safeReturnUrl(requested));
   }
+}
+
+export function safeReturnUrl(requested: string | null): string {
+  if (
+    !requested ||
+    !requested.startsWith('/') ||
+    requested.startsWith('//') ||
+    requested.includes('\\')
+  )
+    return '/';
+  return requested;
 }

@@ -6,7 +6,8 @@ export interface CreateSavedPlaceDto {
   category: 'comida' | 'cultura' | 'naturaleza' | 'traslado' | 'alojamiento' | 'otro';
   city: string;
   country: string;
-  image: string;
+  /** @deprecated */image?: string;
+  imageAssetId?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   name: string;

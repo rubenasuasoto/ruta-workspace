@@ -7,4 +7,5 @@ export interface UserResponseDto {
   id: string;
   name: string;
   providers: Array<'LOCAL' | 'GOOGLE'>;
+  systemRole: 'user' | 'admin';
 }

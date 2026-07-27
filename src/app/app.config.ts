@@ -21,6 +21,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([authInterceptor])),
     provideApiConfiguration(environment.apiBaseUrl),
     provideAppInitializer(() => {
+      if (globalThis.location?.pathname === '/demo') return;
       const publicConfig = inject(PublicConfigStore);
       const auth = inject(AuthStore);
       const trips = inject(TripStore);

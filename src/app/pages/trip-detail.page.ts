@@ -37,11 +37,12 @@ type Tab = 'resumen' | 'itinerario' | 'presupuesto' | 'mapa';
         class="cover"
         [style.background-image]="
           'linear-gradient(90deg, rgba(14,37,38,.84), rgba(14,37,38,.18)), url(' +
-          t.coverImage +
+          (t.coverImage || '') +
           ')'
         "
       >
         <a routerLink="/viajes">← Todos los viajes</a>
+        <a class="share-link" [routerLink]="['/viajes', t.id, 'compartir']">Compartir viaje</a>
         <div>
           <span class="status" [class]="'status ' + t.status">{{ t.status }}</span>
           <h1>{{ t.destination }}</h1>
@@ -467,6 +468,11 @@ type Tab = 'resumen' | 'itinerario' | 'presupuesto' | 'mapa';
       border: 0;
       color: #f8d4cc;
       font-size: 0.78rem;
+      position: absolute;
+      right: clamp(1.25rem, 5vw, 5rem);
+      top: 4.4rem;
+    }
+    .share-link {
       position: absolute;
       right: clamp(1.25rem, 5vw, 5rem);
       top: 2rem;

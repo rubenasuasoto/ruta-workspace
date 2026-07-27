@@ -11,7 +11,9 @@ import { authControllerRegister } from '../api/fn/auth/auth-controller-register'
 import { authControllerResendVerification } from '../api/fn/auth/auth-controller-resend-verification';
 import { authControllerResetPassword } from '../api/fn/auth/auth-controller-reset-password';
 import { authControllerVerifyEmail } from '../api/fn/auth/auth-controller-verify-email';
+import { invitationsControllerInspect } from '../api/fn/invitations/invitations-controller-inspect';
 import { PendingAuthResponseDto } from '../api/models/pending-auth-response-dto';
+import { InvitationInspectionDto } from '../api/models/invitation-inspection-dto';
 import { UserResponseDto } from '../api/models/user-response-dto';
 
 @Injectable({ providedIn: 'root' })
@@ -38,17 +40,16 @@ export class AuthStore {
     );
   }
 
-  async register(
-    name: string,
-    email: string,
-    password: string,
-    turnstileToken?: string,
-  ): Promise<PendingAuthResponseDto> {
-    return this.pending(() =>
+  async register(name: string, password: string, invitationToken: string): Promise<void> {
+    await this.authenticate(() =>
       this.api.invoke(authControllerRegister, {
-        body: { name, email, password, turnstileToken },
+        body: { name, password, invitationToken },
       }),
     );
+  }
+
+  inspectInvitation(token: string): Promise<InvitationInspectionDto> {
+    return this.run(() => this.api.invoke(invitationsControllerInspect, { body: { token } }));
   }
 
   async verifyEmail(token: string): Promise<void> {
@@ -87,8 +88,12 @@ export class AuthStore {
     );
   }
 
-  async loginWithGoogle(credential: string): Promise<void> {
-    await this.authenticate(() => this.api.invoke(authControllerGoogle, { body: { credential } }));
+  async loginWithGoogle(credential: string, invitationToken?: string): Promise<void> {
+    await this.authenticate(() =>
+      this.api.invoke(authControllerGoogle, {
+        body: { credential, invitationToken },
+      }),
+    );
   }
 
   async refresh(): Promise<string | null> {

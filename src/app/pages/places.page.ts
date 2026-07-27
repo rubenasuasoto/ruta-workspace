@@ -8,6 +8,10 @@ import {
   LocationSelection,
 } from '../features/map/location-picker.component';
 import { TravelMapComponent } from '../features/map/travel-map.component';
+import {
+  MediaPickerComponent,
+  MediaSelection,
+} from '../features/media/media-picker.component';
 
 @Component({
   selector: 'app-places',
@@ -15,6 +19,7 @@ import { TravelMapComponent } from '../features/map/travel-map.component';
     ReactiveFormsModule,
     LocationPickerComponent,
     TravelMapComponent,
+    MediaPickerComponent,
   ],
   template: `
     <section class="page">
@@ -38,7 +43,8 @@ import { TravelMapComponent } from '../features/map/travel-map.component';
           <div class="places">
             @for (place of filtered(); track place.id) {
               <article class="place" [class.visited]="place.visited">
-                <img [src]="place.image" [alt]="place.name">
+                @if(place.image){<img [src]="place.image" [alt]="place.name">}
+                @else{<div class="place-placeholder" aria-hidden="true"><span>◇</span></div>}
                 <div>
                   <span class="place-category">{{place.category}}</span>
                   <h2>{{place.name}}</h2><p>{{place.city}}, {{place.country}}</p>
@@ -76,7 +82,14 @@ import { TravelMapComponent } from '../features/map/travel-map.component';
             <div class="field"><label for="place-city">Ciudad</label><input id="place-city" formControlName="city" placeholder="Ej. Barcelona"></div>
             <div class="field"><label for="place-country">País</label><input id="place-country" formControlName="country" placeholder="Ej. España"></div>
             <div class="field"><label for="place-category">Categoría</label><select id="place-category" formControlName="category"><option value="cultura">Cultura</option><option value="comida">Comida</option><option value="naturaleza">Naturaleza</option><option value="alojamiento">Alojamiento</option><option value="traslado">Traslado</option><option value="otro">Otro</option></select></div>
-            <div class="field full"><label for="place-image">Imagen (URL)</label><input id="place-image" formControlName="image"></div>
+            <div class="field full">
+              <app-media-picker
+                [initialUrl]="editing()?.image || null"
+                [initialAssetId]="editing()?.imageAssetId || null"
+                [defaultQuery]="imageQuery()"
+                (selectionChange)="imageSelection.set($event)"
+              />
+            </div>
             <div class="field full"><label for="place-note">Nota</label><textarea id="place-note" formControlName="note" placeholder="¿Por qué quieres ir?"></textarea></div>
             <app-location-picker [value]="location()" (valueChange)="location.set($event)" />
           </div>
@@ -87,7 +100,7 @@ import { TravelMapComponent } from '../features/map/travel-map.component';
     }
   `,
   styles: `
-    .toolbar{align-items:flex-start;display:flex;gap:1rem;justify-content:space-between}.view-switch{background:var(--paper);border:1px solid var(--line);border-radius:999px;display:flex;padding:.2rem}.view-switch button{background:transparent;border:0;border-radius:999px;color:var(--muted);padding:.45rem .7rem}.view-switch button.active{background:var(--ink);color:white}.places{display:grid;gap:1.25rem;grid-template-columns:repeat(3,1fr)}.place{background:var(--paper);border:1px solid var(--line);overflow:hidden}.place>img{aspect-ratio:1.15;display:block;filter:saturate(.9);object-fit:cover;width:100%}.place>div{padding:1.2rem}.place-category{color:var(--coral);font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.place h2{font-size:1.75rem;margin:.55rem 0 .1rem}.place p{color:var(--muted);font-size:.8rem;margin:0}.place .address{font-size:.7rem;margin-top:.45rem}.place blockquote{border-left:2px solid var(--sand);color:var(--muted);font-family:var(--font-display);font-size:.95rem;font-style:italic;margin:1rem 0;padding-left:.7rem}.place-actions{align-items:center;display:flex;justify-content:space-between}.visit{background:transparent;border:0;color:var(--ink);font-size:.76rem;font-weight:700;padding:0}.visit span{border:1px solid var(--ink);border-radius:50%;display:inline-block;height:15px;line-height:13px;margin-right:.35rem;text-align:center;width:15px}.visited{opacity:.72}.visited img{filter:grayscale(.55)}.visited .visit span{background:var(--ink);color:white}.icon-button.danger{color:#a33a2c}.map-view{display:grid;gap:1rem;grid-template-columns:minmax(0,1.7fr) minmax(240px,.6fr);min-height:560px}.map-view app-travel-map{min-height:560px}.map-view aside{background:var(--paper);border:1px solid var(--line);border-radius:1rem;max-height:560px;overflow:auto;padding:.7rem}.map-view aside>button{background:transparent;border:0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;padding:.75rem;text-align:left;width:100%}.map-view small{color:var(--muted);margin-top:.2rem}.unlocated{color:var(--muted);font-size:.72rem;padding:.7rem}.modal{max-width:760px}@media(max-width:850px){.places{grid-template-columns:repeat(2,1fr)}.map-view{grid-template-columns:1fr}.map-view app-travel-map{min-height:400px}.map-view aside{max-height:260px}}@media(max-width:600px){.toolbar{align-items:stretch;flex-direction:column}.view-switch{align-self:flex-start}.places{grid-template-columns:1fr}}
+    .toolbar{align-items:flex-start;display:flex;gap:1rem;justify-content:space-between}.view-switch{background:var(--paper);border:1px solid var(--line);border-radius:999px;display:flex;padding:.2rem}.view-switch button{background:transparent;border:0;border-radius:999px;color:var(--muted);padding:.45rem .7rem}.view-switch button.active{background:var(--ink);color:white}.places{display:grid;gap:1.25rem;grid-template-columns:repeat(3,1fr)}.place{background:var(--paper);border:1px solid var(--line);overflow:hidden}.place>img,.place-placeholder{aspect-ratio:1.15;display:block;width:100%}.place>img{filter:saturate(.9);object-fit:cover}.place-placeholder{align-items:center;background:linear-gradient(135deg,#efe4d4,#dce8e4);color:var(--deep);display:flex;font-size:3rem;justify-content:center}.place>div:not(.place-placeholder){padding:1.2rem}.place-category{color:var(--coral);font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.place h2{font-size:1.75rem;margin:.55rem 0 .1rem}.place p{color:var(--muted);font-size:.8rem;margin:0}.place .address{font-size:.7rem;margin-top:.45rem}.place blockquote{border-left:2px solid var(--sand);color:var(--muted);font-family:var(--font-display);font-size:.95rem;font-style:italic;margin:1rem 0;padding-left:.7rem}.place-actions{align-items:center;display:flex;justify-content:space-between}.visit{background:transparent;border:0;color:var(--ink);font-size:.76rem;font-weight:700;padding:0}.visit span{border:1px solid var(--ink);border-radius:50%;display:inline-block;height:15px;line-height:13px;margin-right:.35rem;text-align:center;width:15px}.visited{opacity:.72}.visited img{filter:grayscale(.55)}.visited .visit span{background:var(--ink);color:white}.icon-button.danger{color:#a33a2c}.map-view{display:grid;gap:1rem;grid-template-columns:minmax(0,1.7fr) minmax(240px,.6fr);min-height:560px}.map-view app-travel-map{min-height:560px}.map-view aside{background:var(--paper);border:1px solid var(--line);border-radius:1rem;max-height:560px;overflow:auto;padding:.7rem}.map-view aside>button{background:transparent;border:0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;padding:.75rem;text-align:left;width:100%}.map-view small{color:var(--muted);margin-top:.2rem}.unlocated{color:var(--muted);font-size:.72rem;padding:.7rem}.modal{max-width:760px}@media(max-width:850px){.places{grid-template-columns:repeat(2,1fr)}.map-view{grid-template-columns:1fr}.map-view app-travel-map{min-height:400px}.map-view aside{max-height:260px}}@media(max-width:600px){.toolbar{align-items:stretch;flex-direction:column}.view-switch{align-self:flex-start}.places{grid-template-columns:1fr}}
   `,
 })
 export class PlacesPage {
@@ -103,6 +116,14 @@ export class PlacesPage {
   readonly saving = signal(false);
   readonly editing = signal<SavedPlace | null>(null);
   readonly location = signal<LocationSelection | null>(null);
+  readonly imageSelection = signal<MediaSelection>({
+    assetId: null,
+    url: null,
+  });
+  readonly imageQuery = computed(
+    () =>
+      `${this.form.controls.name.value} ${this.form.controls.city.value} ${this.form.controls.country.value}`.trim(),
+  );
   readonly filtered = computed(() =>
     this.store.places().filter(
       (place) =>
@@ -138,23 +159,18 @@ export class PlacesPage {
     city: ['', Validators.required],
     country: ['', Validators.required],
     category: ['cultura' as ActivityKind],
-    image: [
-      'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=800&q=75',
-      Validators.required,
-    ],
     note: [''],
   });
 
   openCreate(): void {
     this.editing.set(null);
     this.location.set(null);
+    this.imageSelection.set({ assetId: null, url: null });
     this.form.reset({
       name: '',
       city: '',
       country: '',
       category: 'cultura',
-      image:
-        'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=800&q=75',
       note: '',
     });
     this.showForm.set(true);
@@ -162,6 +178,10 @@ export class PlacesPage {
 
   openEdit(place: SavedPlace): void {
     this.editing.set(place);
+    this.imageSelection.set({
+      assetId: place.imageAssetId ?? null,
+      url: place.image ?? null,
+    });
     this.form.reset(place);
     this.location.set(
       place.latitude != null && place.longitude != null
@@ -188,6 +208,7 @@ export class PlacesPage {
     const location = this.location();
     const value = {
       ...this.form.getRawValue(),
+      imageAssetId: this.imageSelection().assetId,
       visited: current?.visited ?? false,
       address: location?.address ?? null,
       latitude: location?.latitude ?? null,
