@@ -30,16 +30,23 @@ La pantalla de acceso ofrece dos recorridos:
   para cuentas creadas mediante una invitación personal.
 
 La demo carga una instantánea versionada de Valencia desde
-`public/assets/demo/valencia.snapshot.json`. Sus lugares son reales y sus
-geometrías se prepararon con HeiGIT/openrouteservice, pero los horarios, costes
-y recomendaciones son estimaciones de demostración. No contiene datos de
-usuarios.
+`public/assets/demo/valencia.snapshot.json`. Sus lugares y geometrías proceden
+de una captura geográfica real, pero el viaje, los horarios, los costes y las
+recomendaciones son ficticios. No contiene datos de usuarios.
 
-Al abrirla no inicializa la sesión, no utiliza `localStorage`, no solicita datos
-a la API privada y no contacta teselas, geocodificación ni rutas externas. Las
-interacciones se conservan únicamente durante la visita. El mapa utiliza el
-fondo vectorial local `public/assets/demo/valencia-map.svg`; cada jornada parte
-del hotel de la demo y termina de nuevo en él.
+Al abrirla no inicializa la sesión, no solicita datos a la API privada y no
+contacta teselas, geocodificación, rutas ni OpenAI. Inicializa una única copia
+editable en `localStorage` bajo la clave exclusiva
+`ruta.portfolio-demo.v2`; el autoguardado conserva los cambios entre visitas y
+«Restaurar viaje» elimina solo esa copia. El mapa utiliza el fondo vectorial
+local `public/assets/demo/valencia-map.svg`; cada jornada parte del hotel de la
+demo y termina de nuevo en él.
+
+El selector de ubicación de la demo busca exclusivamente en un catálogo local
+formado por las direcciones congeladas del viaje y varios ejemplos editoriales.
+No pretende ser un geocodificador mundial. Las imágenes de los lugares son
+recursos locales genéricos por categoría y no se presentan como fotografías de
+la dirección exacta.
 
 Los marcadores de la demo abren una URL universal de Google Maps únicamente
 después de pulsarlos. Se envía la coordenada del destino, se omite el origen
@@ -107,3 +114,6 @@ IA, las rutas y la búsqueda geográfica, bloquea las teselas externas, verifica
 el correo desde Mailpit y elimina sus cuentas `e2e-browser-*` antes y después
 del flujo. La prueba específica de `/demo` bloquea también HeiGIT y `/api`,
 ejecuta Axe, comprueba la guía con teclado y valida escritorio, móvil y tableta.
+
+El resultado de la última validación integral y la guía para retomar el
+desarrollo están en [`docs/CIERRE_TEMPORAL.md`](docs/CIERRE_TEMPORAL.md).
