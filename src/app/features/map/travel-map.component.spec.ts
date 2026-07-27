@@ -62,4 +62,53 @@ describe('TravelMapComponent', () => {
     expect(fixture.nativeElement.querySelector('.ruta-marker')).not.toBeNull();
     expect(() => fixture.destroy()).not.toThrow();
   });
+
+  it('abre Google Maps solo después de pulsar un marcador habilitado', async () => {
+    await TestBed.configureTestingModule({
+      imports: [TravelMapComponent],
+      providers: [
+        {
+          provide: PublicConfigStore,
+          useValue: {
+            mapTiles: () => ({
+              url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+              attribution: 'OpenStreetMap',
+              maxZoom: 19,
+              provider: 'openstreetmap',
+            }),
+          },
+        },
+      ],
+    }).compileComponents();
+    const open = vi.spyOn(window, 'open').mockImplementation(() => null);
+    const fixture = TestBed.createComponent(TravelMapComponent);
+    fixture.componentRef.setInput('directionsEnabled', true);
+    fixture.componentRef.setInput('tilesEnabled', false);
+    fixture.componentRef.setInput('points', [
+      {
+        id: 'hotel',
+        label: 'Hotel de la demo',
+        latitude: 39.4699,
+        longitude: -0.3763,
+        kind: 'alojamiento',
+        marker: 'base',
+      },
+    ]);
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(open).not.toHaveBeenCalled();
+
+    (fixture.nativeElement as HTMLElement)
+      .querySelector('.ruta-marker')
+      ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(open).toHaveBeenCalledWith(
+      'https://www.google.com/maps/dir/?api=1&destination=39.469900%2C-0.376300&dir_action=navigate',
+      '_blank',
+      'noopener,noreferrer',
+    );
+    fixture.destroy();
+    open.mockRestore();
+  });
 });
