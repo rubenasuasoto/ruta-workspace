@@ -15,6 +15,9 @@ export interface DemoActivity {
   completed: boolean;
 }
 
+export type DemoExpenseCategory =
+  'accommodation' | 'food' | 'transport' | 'activities' | 'other';
+
 export interface DemoRouteLeg {
   id: string;
   fromActivityId: string;
@@ -33,6 +36,7 @@ export interface DemoDay {
   activities: DemoActivity[];
   route: {
     status: 'complete' | 'partial';
+    source: 'frozen' | 'approximate';
     totalDistanceMeters: number;
     totalDurationSeconds: number;
     legs: DemoRouteLeg[];
@@ -42,7 +46,7 @@ export interface DemoDay {
 export interface DemoExpense {
   id: string;
   title: string;
-  category: 'accommodation' | 'food' | 'transport' | 'activities' | 'other';
+  category: DemoExpenseCategory;
   amount: number;
 }
 
@@ -57,6 +61,7 @@ export interface DemoPlace {
   address: string;
   latitude: number;
   longitude: number;
+  image: string;
 }
 
 export interface DemoSnapshot {
@@ -78,6 +83,7 @@ export interface DemoSnapshot {
     description: string;
     status: 'planned';
     budget: number;
+    coverImage: string;
   };
   base: {
     id: string;
@@ -126,10 +132,36 @@ export function demoMapLines(snapshot: DemoSnapshot, dayId?: string): MapLine[] 
   return snapshot.days
     .filter((day) => !dayId || day.id === dayId)
     .flatMap((day) =>
-      day.route.legs.map((leg) => ({
-        id: leg.id,
-        mode: leg.mode,
-        coordinates: leg.coordinates,
-      })),
+      day.route.source === 'frozen'
+        ? day.route.legs.map((leg) => ({
+            id: leg.id,
+            mode: leg.mode,
+            coordinates: leg.coordinates,
+          }))
+        : approximateDayLines(snapshot, day),
     );
+}
+
+function approximateDayLines(snapshot: DemoSnapshot, day: DemoDay): MapLine[] {
+  const stops = [
+    {
+      id: snapshot.base.id,
+      latitude: snapshot.base.latitude,
+      longitude: snapshot.base.longitude,
+    },
+    ...day.activities,
+    {
+      id: snapshot.base.id,
+      latitude: snapshot.base.latitude,
+      longitude: snapshot.base.longitude,
+    },
+  ];
+  return stops.slice(0, -1).map((stop, index) => ({
+    id: `approx-${day.id}-${stop.id}-${index}`,
+    mode: 'fallback',
+    coordinates: [
+      [stop.latitude, stop.longitude],
+      [stops[index + 1].latitude, stops[index + 1].longitude],
+    ],
+  }));
 }

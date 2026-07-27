@@ -617,7 +617,8 @@ type Tab = 'resumen' | 'itinerario' | 'presupuesto' | 'mapa';
       margin: 0.3rem 0;
     }
     .day-title .icon-button {
-      display: none;
+      display: inline-flex;
+      margin-top: 0.35rem;
     }
     .activities {
       padding-left: 1.3rem;
@@ -790,7 +791,8 @@ type Tab = 'resumen' | 'itinerario' | 'presupuesto' | 'mapa';
         margin: 0;
       }
       .day-title .icon-button {
-        display: block;
+        display: inline-flex;
+        margin-top: 0;
       }
       .activities {
         padding: 0;

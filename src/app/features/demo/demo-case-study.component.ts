@@ -6,18 +6,18 @@ import { Component } from '@angular/core';
     <section id="demo-architecture" class="case-section" aria-labelledby="architecture-title">
       <header>
         <p class="eyebrow">Cómo está construida</p>
-        <h2 id="architecture-title">Una aplicación completa, no una maqueta.</h2>
+        <h2 id="architecture-title">Un producto completo, contado sin ruido.</h2>
         <p>
-          La interfaz, la API y los datos permanecen separados para que cada parte pueda evolucionar
-          sin acoplar el resto del producto.
+          Angular presenta la experiencia; NestJS protege las operaciones y PostgreSQL conserva el
+          dominio. El contrato OpenAPI mantiene ambos repositorios sincronizados.
         </p>
       </header>
       <div class="architecture" aria-label="Arquitectura técnica de Ruta">
-        <article><span>01</span><strong>Angular 22</strong><p>Signals, formularios reactivos, Leaflet y cliente OpenAPI.</p></article>
+        <article><span>01</span><strong>Angular 22</strong><p>Signals, formularios, Leaflet y una demo local aislada.</p></article>
         <i aria-hidden="true">→</i>
-        <article><span>02</span><strong>NestJS 11</strong><p>Autenticación, permisos, IA, rutas y procesamiento de imágenes.</p></article>
+        <article><span>02</span><strong>NestJS 11</strong><p>Autenticación, permisos, itinerarios, rutas e imágenes.</p></article>
         <i aria-hidden="true">→</i>
-        <article><span>03</span><strong>PostgreSQL + S3</strong><p>Datos privados, migraciones reproducibles y archivos protegidos.</p></article>
+        <article><span>03</span><strong>PostgreSQL + S3</strong><p>Datos privados, migraciones y archivos firmados.</p></article>
       </div>
     </section>
 
@@ -38,9 +38,9 @@ import { Component } from '@angular/core';
       <p class="eyebrow">Decisiones y aprendizaje</p>
       <h2 id="decisions-title">Un proyecto pensado para crecer sin ocultar sus límites.</h2>
       <div>
-        <p>Las sugerencias de IA son borradores confirmables, nunca datos que se guardan solos.</p>
-        <p>Las rutas respetan el orden manual y diferencian estimaciones de navegación real.</p>
-        <p>La demo reproduce una captura local versionada, sin cuentas, analítica ni llamadas a proveedores durante la visita.</p>
+        <p>La demo guarda una copia versionada en el navegador y puede restaurarse sin tocar datos reales.</p>
+        <p>Las rutas originales son una captura de openrouteservice; los cambios locales se distinguen como aproximaciones.</p>
+        <p>El viaje y sus personas son ficticios. Las ubicaciones y geometrías se prepararon una sola vez.</p>
       </div>
       <nav aria-label="Código fuente de Ruta">
         <a href="https://github.com/rubenasuasoto/ruta-workspace" rel="noreferrer">Código Angular ↗</a>

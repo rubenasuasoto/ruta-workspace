@@ -1,5 +1,6 @@
 import type { Routes } from '@angular/router';
 import { adminGuard, authGuard, guestGuard } from './auth/auth.guard';
+import { demoExitGuard } from './features/demo/demo-exit.guard';
 
 export const routes: Routes = [
   {
@@ -19,6 +20,7 @@ export const routes: Routes = [
   {
     path: 'demo',
     title: 'Ruta — Demo de portafolio',
+    canDeactivate: [demoExitGuard],
     loadComponent: () => import('./pages/demo.page').then((m) => m.DemoPage),
   },
   {

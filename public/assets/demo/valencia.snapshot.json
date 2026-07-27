@@ -1,11 +1,11 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "generatedAt": "2026-07-27T06:22:14.299Z",
   "source": {
     "mode": "frozen-provider-snapshot",
     "geocoding": "HeiGIT Pelias",
     "routing": "openrouteservice",
-    "attribution": "© openrouteservice.org by HeiGIT · Map data © OpenStreetMap contributors",
+    "attribution": "© openrouteservice by HeiGIT · Map data © OpenStreetMap contributors",
     "disclaimer": "Ubicaciones y recorridos capturados para la demo. Horarios, costes y recomendaciones son estimaciones."
   },
   "trip": {
@@ -13,10 +13,11 @@
     "destination": "Valencia",
     "country": "España",
     "startDate": "2027-05-12",
-    "endDate": "2027-05-15",
+    "endDate": "2027-05-14",
     "description": "Tres días entre mercados históricos, arquitectura, jardines y el Mediterráneo.",
     "status": "planned",
-    "budget": 850
+    "budget": 850,
+    "coverImage": "/assets/demo/photos/valencia-cover.webp"
   },
   "base": {
     "id": "demo-hotel",
@@ -100,6 +101,7 @@
       ],
       "route": {
         "status": "complete",
+        "source": "frozen",
         "totalDistanceMeters": 4936,
         "totalDurationSeconds": 3553,
         "legs": [
@@ -1329,6 +1331,7 @@
       ],
       "route": {
         "status": "complete",
+        "source": "frozen",
         "totalDistanceMeters": 8874,
         "totalDurationSeconds": 2723,
         "legs": [
@@ -2776,6 +2779,7 @@
       ],
       "route": {
         "status": "complete",
+        "source": "frozen",
         "totalDistanceMeters": 13934,
         "totalDurationSeconds": 3059,
         "legs": [
@@ -5272,19 +5276,21 @@
       "visited": false,
       "address": "Desayuno en el Mercado Central, Valencia",
       "latitude": 39.4736,
-      "longitude": -0.3791
+      "longitude": -0.3791,
+      "image": "/assets/demo/photos/generic-food.webp"
     },
     {
       "id": "demo-place-2",
-      "name": "Paseo por el Jardín del Turia",
+      "name": "Barrio del Cabanyal",
       "city": "Valencia",
       "country": "España",
-      "category": "naturaleza",
-      "note": "Tramo tranquilo por el antiguo cauce del río.",
+      "category": "cultura",
+      "note": "Fachadas de azulejos y calles con carácter marinero.",
       "visited": false,
-      "address": "Paseo por el Jardín del Turia, Valencia",
-      "latitude": 39.4665,
-      "longitude": -0.3608
+      "address": "Carrer de la Reina, Cabanyal, Valencia",
+      "latitude": 39.4692,
+      "longitude": -0.3319,
+      "image": "/assets/demo/photos/generic-culture.webp"
     },
     {
       "id": "demo-place-3",
@@ -5296,7 +5302,8 @@
       "visited": false,
       "address": "Museo de las Ciencias «Príncipe Felipe», Valencia, España",
       "latitude": 39.455438,
-      "longitude": -0.350498
+      "longitude": -0.350498,
+      "image": "/assets/demo/photos/generic-culture.webp"
     },
     {
       "id": "demo-place-4",
@@ -5308,7 +5315,8 @@
       "visited": false,
       "address": "Playa de la Malvarrosa, Valencia",
       "latitude": 39.4787,
-      "longitude": -0.3238
+      "longitude": -0.3238,
+      "image": "/assets/demo/photos/generic-nature.webp"
     }
   ]
 }
