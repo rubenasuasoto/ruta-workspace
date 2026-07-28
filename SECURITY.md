@@ -1,5 +1,7 @@
 # Seguridad del cliente Ruta
 
+[English](SECURITY.en.md)
+
 El cliente no almacena tokens de acceso en almacenamiento persistente ni
 contiene claves privadas. El token de acceso vive únicamente en memoria y la
 sesión renovable pertenece a una cookie `HttpOnly` de la API. Las operaciones
