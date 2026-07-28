@@ -9,5 +9,11 @@
       "destination": "/demo?tour=1",
       "permanent": false
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/demo",
+      "destination": "/index.html"
+    }
   ]
 }

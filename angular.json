@@ -61,7 +61,10 @@
             },
             "demo": {
               "browser": "src/main.demo.ts",
-              "index": "src/index.demo.html",
+              "index": {
+                "input": "src/index.demo.html",
+                "output": "index.html"
+              },
               "outputPath": "dist/ruta-demo",
               "assets": [
                 {
