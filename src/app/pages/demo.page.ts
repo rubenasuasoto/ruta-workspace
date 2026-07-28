@@ -9,6 +9,7 @@ import {
   DemoTourComponent,
   type DemoTourStep,
 } from '../features/demo/demo-tour.component';
+import { DEMO_EXIT_TARGET } from '../features/demo/demo-exit-target';
 
 @Component({
   selector: 'app-demo',
@@ -45,7 +46,7 @@ import {
             <div>
               <button type="button" class="button secondary" (click)="continueExploring()">Seguir explorando</button>
               <button type="button" class="button coral" (click)="showProject()">Ver el proyecto</button>
-              <button type="button" class="text-button" (click)="exit()">Volver al acceso</button>
+              <button type="button" class="text-button" (click)="exit()">{{ exitTarget.label }}</button>
             </div>
           </section>
         </div>
@@ -184,6 +185,7 @@ export class DemoPage {
   @ViewChild('workspace') private workspace?: DemoWorkspaceComponent;
   private readonly router = inject(Router);
   private readonly feedback = inject(FeedbackService);
+  protected readonly exitTarget = inject(DEMO_EXIT_TARGET);
 
   constructor() {
     const route = inject(ActivatedRoute);
@@ -227,7 +229,13 @@ export class DemoPage {
   }
 
   async exit(): Promise<void> {
-    await this.router.navigateByUrl('/acceso');
+    if (this.exitTarget.external) {
+      const canLeave = await this.canLeaveDemo();
+      if (!canLeave) return;
+      window.location.assign(this.exitTarget.url);
+      return;
+    }
+    await this.router.navigateByUrl(this.exitTarget.url);
   }
 
   canLeaveDemo(): boolean | Promise<boolean> {

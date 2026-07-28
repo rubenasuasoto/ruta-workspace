@@ -59,6 +59,38 @@
               ],
               "outputHashing": "all"
             },
+            "demo": {
+              "browser": "src/main.demo.ts",
+              "index": "src/index.demo.html",
+              "outputPath": "dist/ruta-demo",
+              "assets": [
+                {
+                  "glob": "favicon.ico",
+                  "input": "public"
+                },
+                {
+                  "glob": "**/*",
+                  "input": "public/assets/demo",
+                  "output": "assets/demo"
+                }
+              ],
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kB",
+                  "maximumError": "1MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "9kB",
+                  "maximumError": "10kB"
+                }
+              ],
+              "optimization": true,
+              "extractLicenses": true,
+              "sourceMap": false,
+              "outputHashing": "all"
+            },
             "development": {
               "optimization": false,
               "extractLicenses": false,
@@ -78,6 +110,9 @@
             },
             "development": {
               "buildTarget": "ruta:build:development"
+            },
+            "demo": {
+              "buildTarget": "ruta:build:demo"
             }
           },
           "defaultConfiguration": "development"
