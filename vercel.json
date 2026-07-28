@@ -3,17 +3,24 @@
   "framework": null,
   "buildCommand": "npm run build:demo",
   "outputDirectory": "dist/ruta-demo/browser",
-  "redirects": [
+  "routes": [
     {
-      "source": "/",
-      "destination": "/demo?tour=1",
-      "permanent": false
-    }
-  ],
-  "rewrites": [
+      "src": "^/$",
+      "headers": {
+        "Location": "/demo?tour=1"
+      },
+      "status": 307
+    },
     {
-      "source": "/demo",
-      "destination": "/index.html"
+      "src": "^/demo/?$",
+      "dest": "/index.html"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": ".*",
+      "status": 404
     }
   ]
 }
